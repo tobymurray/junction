@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Simple message bubble icon -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,24C35.2,24 20,36.5 20,52c0,8.8 4.8,16.6 12.2,21.8L28,84l14.2,-6.2c3.6,1.4 7.6,2.2 11.8,2.2c18.8,0 34,-12.5 34,-28S72.8,24 54,24z"/>
+</vector>

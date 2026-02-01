@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+    SMS-UPSTREAM is a library module.
+
+    All activities, receivers, services, and permissions are declared
+    in the app module's manifest, NOT here.
+
+    This manifest should remain minimal. When AOSP source is added,
+    do NOT copy the AOSP AndroidManifest.xml here - it contains
+    system-only permissions and components we cannot use.
+    -->
+</manifest>

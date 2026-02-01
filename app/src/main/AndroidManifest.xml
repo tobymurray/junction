@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ====================================================================
+         SMS PERMISSIONS (all public SDK permissions)
+         ==================================================================== -->
+
+    <!-- Send SMS messages -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+
+    <!-- Receive incoming SMS (for default SMS app) -->
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+
+    <!-- Read SMS from system provider -->
+    <uses-permission android:name="android.permission.READ_SMS" />
+
+    <!-- Write SMS to system provider (default SMS app requirement) -->
+    <uses-permission android:name="android.permission.WRITE_SMS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- ====================================================================
+         MMS PERMISSIONS
+         ==================================================================== -->
+
+    <!-- Receive MMS messages -->
+    <uses-permission android:name="android.permission.RECEIVE_MMS" />
+
+    <!-- Receive WAP push for MMS notifications -->
+    <uses-permission android:name="android.permission.RECEIVE_WAP_PUSH" />
+
+    <!-- ====================================================================
+         CONTACTS & PHONE STATE
+         ==================================================================== -->
+
+    <!-- Read contacts for display names -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <!-- Phone state for subscription info -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <!-- Phone numbers (API 26+) -->
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
+
+    <!-- ====================================================================
+         NETWORK & STORAGE (for MMS)
+         ==================================================================== -->
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+
+    <!-- ====================================================================
+         NOTIFICATIONS
+         ==================================================================== -->
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- ====================================================================
+         FEATURE DECLARATIONS
+         ==================================================================== -->
+
+    <!-- Device must have telephony -->
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="true" />
+
+    <!-- ====================================================================
+         APPLICATION
+         ==================================================================== -->
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AospMessaging"
+        tools:targetApi="34">
+
+        <!-- ================================================================
+             MAIN ACTIVITY
+             ================================================================ -->
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
+
+            <!-- Main launcher entry -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Handle SENDTO intents (compose new message) -->
+            <intent-filter>
+                <action android:name="android.intent.action.SENDTO" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="sms" />
+                <data android:scheme="smsto" />
+                <data android:scheme="mms" />
+                <data android:scheme="mmsto" />
+            </intent-filter>
+
+            <!-- Handle VIEW intents for SMS URIs -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sms" />
+                <data android:scheme="smsto" />
+                <data android:scheme="mms" />
+                <data android:scheme="mmsto" />
+            </intent-filter>
+        </activity>
+
+        <!-- ================================================================
+             SMS RECEIVERS (required for default SMS app)
+             ================================================================ -->
+
+        <!-- Primary SMS receiver (when we are default SMS app) -->
+        <receiver
+            android:name=".receiver.SmsDeliverReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_DELIVER" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Fallback SMS receiver (when not default, for testing) -->
+        <receiver
+            android:name=".receiver.SmsReceivedReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ================================================================
+             MMS RECEIVERS
+             ================================================================ -->
+
+        <!-- MMS WAP push receiver (for MMS notifications) -->
+        <receiver
+            android:name=".receiver.MmsWapPushReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_WAP_PUSH">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
+                <data android:mimeType="application/vnd.wap.mms-message" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ================================================================
+             RESPOND VIA MESSAGE SERVICE (quick reply from call screen)
+             ================================================================ -->
+
+        <service
+            android:name=".service.RespondViaMessageService"
+            android:exported="true"
+            android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="sms" />
+                <data android:scheme="smsto" />
+                <data android:scheme="mms" />
+                <data android:scheme="mmsto" />
+            </intent-filter>
+        </service>
+
+        <!-- ================================================================
+             HEADLESS SMS SEND SERVICE (for sending from other apps)
+             ================================================================ -->
+
+        <service
+            android:name=".service.HeadlessSmsSendService"
+            android:exported="true"
+            android:permission="android.permission.SEND_SMS">
+            <intent-filter>
+                <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
+                <data android:scheme="sms" />
+                <data android:scheme="smsto" />
+            </intent-filter>
+        </service>
+
+    </application>
+
+</manifest>
