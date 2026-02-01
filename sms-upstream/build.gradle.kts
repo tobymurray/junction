@@ -56,6 +56,7 @@ android {
             java.srcDirs("src/main/java")
             res.srcDirs("src/main/res")
             aidl.srcDirs("src/main/aidl")
+            assets.srcDirs("src/main/assets")
         }
     }
 
@@ -67,16 +68,45 @@ android {
 }
 
 dependencies {
-    // AndroidX replacements for support library (upstream uses support lib)
+    // AndroidX (replacing support library)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.fragment)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.annotation)
+    implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.androidx.lifecycle.viewmodel)
 
-    // Material (upstream uses material components)
+    // Additional AndroidX needed by AOSP Messaging
+    implementation("androidx.viewpager:viewpager:1.1.0")
+    implementation("androidx.cursoradapter:cursoradapter:1.0.0")
+    implementation("androidx.loader:loader:1.1.0")
+    implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
+    implementation("androidx.palette:palette:1.0.0")
+    implementation("androidx.legacy:legacy-support-v13:1.0.0")
+
+    // Material
     implementation(libs.material)
+
+    // Guava (used extensively by AOSP Messaging)
+    implementation("com.google.guava:guava:33.3.1-android")
+
+    // libphonenumber (phone number parsing/formatting)
+    implementation("com.googlecode.libphonenumber:libphonenumber:8.13.50")
 
     // Core-SMS interfaces (adapter layer)
     implementation(project(":core-sms"))
+
+    // NOTE: The following AOSP-internal libraries are NOT available as public dependencies:
+    // - androidx.appcompat.mms.* (MMS PDU handling)
+    // - com.android.ex.chips.* (contact chips)
+    // - com.android.ex.photo.* (photo viewer)
+    // - com.android.vcard.* (vCard parsing)
+    // - android.support.rastermill.* (frame sequence)
+    // - com.android.common.contacts.* (data usage stat updater)
+    //
+    // These must be either:
+    // 1. Stubbed out
+    // 2. Replaced with public alternatives
+    // 3. Copied from AOSP as separate modules
 }

@@ -4,7 +4,7 @@
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
-    alias(libs.plugins.kotlin.android) apply false
+    // Note: Kotlin plugin not needed - AGP 9.0+ has built-in Kotlin support
 }
 
 // ============================================================================

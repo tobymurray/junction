@@ -5,135 +5,122 @@ Each session should update this file before stopping.
 
 ---
 
-## Session 1 - 2026-02-01
+## Session 2 - 2026-02-01
 
 ### Completed
 
-**Phase 0: Ground Rules & Assumptions**
-- [x] Git repository initialized
-- [x] .gitignore created
-- [x] Initial README.md created
-- [x] docs/ directory created
-- [x] Commit: `1a1edb8` Phase 0: Project initialization
+**Dependency Updates**
+- [x] Updated to AGP 9.0.0 (January 2026)
+- [x] Updated to Gradle 9.3.1 (January 2026)
+- [x] Updated to Kotlin 2.3.0 (via AGP built-in support)
+- [x] Updated compileSdk to 36 (required by androidx.core:core-ktx:1.17.0)
+- [x] Updated AndroidX libraries to latest stable versions
+- [x] Removed explicit kotlin-android plugin (AGP 9.0 has built-in Kotlin)
 
-**Architecture Design**
-- [x] Multi-module architecture designed (sms-upstream, core-sms, app)
-- [x] Gradle scaffolding created (settings.gradle.kts, build.gradle.kts)
-- [x] Version catalog created (gradle/libs.versions.toml)
-- [x] Gradle wrapper configured (8.9)
+**AOSP Source Vendoring**
+- [x] Cloned AOSP Messaging from android.googlesource.com (commit de315b76...)
+- [x] Copied source to sms-upstream/src/main/java/
+- [x] Copied resources to sms-upstream/src/main/res/
+- [x] Copied assets to sms-upstream/src/main/assets/
 
-**Core-SMS Module (Adapter Layer)**
-- [x] Module build.gradle.kts created
-- [x] SmsTransport interface defined
-- [x] MessageStore interface defined
-- [x] NotificationFacade interface defined
-- [x] ContactResolver interface defined
-- [x] SmsReceiveListener interface defined
+**Stub Classes Created**
+- [x] android.support.rastermill (FrameSequence, FrameSequenceDrawable)
+- [x] com.android.ex.chips (RecipientEntry, RecipientEditTextView, BaseRecipientAdapter, etc.)
+- [x] com.android.ex.photo (PhotoViewActivity, PhotoViewIntentBuilder, etc.)
+- [x] com.android.common.contacts (DataUsageStatUpdater)
+- [x] com.android.vcard (VCardEntry, VCardParser, VCardConfig, exceptions, etc.)
 
-**SMS-Upstream Module (Vendored AOSP placeholder)**
-- [x] Module build.gradle.kts created
-- [x] PATCHES.md documentation created
-- [x] Placeholder manifest created
+**Build Configuration**
+- [x] Updated sms-upstream/build.gradle.kts with dependencies
+- [x] Added Guava and libphonenumber dependencies
 
-**App Module**
-- [x] Module build.gradle.kts created
-- [x] AndroidManifest.xml with full SMS app declarations
-- [x] Placeholder MainActivity, Receivers, Services created
-- [x] Resources (themes, strings, icons) created
+### Remaining Errors (~200)
 
-**Documentation**
-- [x] ARCHITECTURE.md - full design documentation
-- [x] UPSTREAM_UPDATE_GUIDE.md - step-by-step update process
-- [x] README.md - updated with architecture overview
+**Category 1: MMS Library (androidx.appcompat.mms.*)**
+The AOSP MMS library is NOT a public AndroidX library. Files affected:
+- ApnSettingsLoader
+- CarrierConfigValuesLoader
+- MmsManager
+- pdu/* (GenericPdu, PduHeaders, PduParser, SendConf)
+- UserAgentInfoLoader
 
-**Build Verification**
-- [x] `./gradlew :core-sms:assembleDebug` - SUCCESS
-- [x] `./gradlew :app:assembleDebug` - SUCCESS
-- [x] APK generated at `app/build/outputs/apk/debug/app-debug.apk`
+**Solution:** Either:
+1. Copy the mms-lib from AOSP (platform/frameworks/opt/mms)
+2. Create comprehensive stubs
+3. Reimplement using public APIs
+
+**Category 2: Switch Statement R.id Errors**
+Library modules have non-final R.id values. Files with switch statements:
+- ContactPickerFragment.java
+- ConversationFragment.java
+- Other UI files
+
+**Solution:** Convert switch statements to if-else chains.
+
+**Category 3: Additional Missing Classes**
+- RecipientEditTextView method signatures need adjustment
+- BuglePhotoViewController extends missing class
+- CustomVCardEntry constructor needs proper implementation
 
 ### Environment
 - Git: 2.52.0
 - Java: OpenJDK 21.0.10
-- Android SDK: ~/Android/Sdk
-- Platforms: 34, 35, 36
-- Gradle: 8.9
-- AGP: 8.5.2
+- Android SDK: ~/Android/Sdk (platforms 34-36)
+- Gradle: 9.3.1
+- AGP: 9.0.0
+- Kotlin: 2.3.0 (built-in)
 
 ---
 
-## What's Ready
+## Next Session: FIX REMAINING COMPILATION ERRORS
 
-The project structure is fully in place. The shell application builds and can be installed
-(though it does nothing useful without AOSP source).
+### Priority Order
 
-### Current State
+1. **MMS Library Stubs** (highest priority)
+   - These are critical for core SMS/MMS functionality
+   - Create stubs in: `sms-upstream/src/main/java/androidx/appcompat/mms/`
+
+2. **R.id Switch Statements**
+   - Convert all switch(R.id.xxx) to if-else chains
+   - Files: ContactPickerFragment, ConversationFragment, others
+
+3. **Additional Stub Fixes**
+   - Fix method signatures in chip stubs
+   - Fix BuglePhotoViewController
+
+### Commands to Resume
+
+```bash
+# Check current working directory
+pwd  # Should be /home/toby/AndroidStudioProjects/AospMessaging
+
+# Verify build still fails with expected errors
+ANDROID_HOME=~/Android/Sdk ./gradlew :sms-upstream:compileDebugJavaWithJavac 2>&1 | grep "error:" | wc -l
+
+# List MMS-related errors
+ANDROID_HOME=~/Android/Sdk ./gradlew :sms-upstream:compileDebugJavaWithJavac 2>&1 | grep "androidx.appcompat.mms"
 ```
-AospMessaging/
-├── app/                    ✅ Builds, has manifest, receivers, services
-├── core-sms/               ✅ Builds, interfaces defined
-├── sms-upstream/           ⏳ Placeholder only - needs AOSP source
-├── docs/
-│   ├── ARCHITECTURE.md     ✅ Full design docs
-│   ├── UPSTREAM_UPDATE_GUIDE.md  ✅ Update procedure
-│   └── SESSION_LOG.md      ✅ This file
-├── gradle/
-│   ├── libs.versions.toml  ✅ Version catalog
-│   └── wrapper/            ✅ Gradle 8.9
-├── build.gradle.kts        ✅ Project-level
-├── settings.gradle.kts     ✅ Module includes
-├── gradle.properties       ✅ AndroidX enabled
-└── gradlew                 ✅ Executable
-```
+
+### Key File Locations
+
+| What | Where |
+|------|-------|
+| AOSP source | sms-upstream/src/main/java/com/android/messaging/ |
+| Stub classes | sms-upstream/src/main/java/{android.support,com.android.ex,com.android.vcard}/ |
+| Build config | sms-upstream/build.gradle.kts |
+| Version catalog | gradle/libs.versions.toml |
 
 ---
 
-## Next Session: VENDOR AOSP SOURCE
+## Session 1 - 2026-01-31
 
-### Immediate Next Steps
-
-1. **Clone AOSP Messaging source**
-   ```bash
-   git clone --depth 1 \
-       https://android.googlesource.com/platform/packages/apps/Messaging \
-       /tmp/aosp-messaging
-   ```
-
-2. **Copy source to sms-upstream/**
-   ```bash
-   cp -r /tmp/aosp-messaging/src/* sms-upstream/src/main/java/
-   cp -r /tmp/aosp-messaging/res/* sms-upstream/src/main/res/
-   ```
-
-3. **Audit dependencies**
-   - Scan for `@hide` API usage
-   - Scan for `com.android.internal.*` imports
-   - Document in PATCHES.md
-
-4. **Apply initial patches**
-   - Remove hidden API calls
-   - Replace with public SDK alternatives
-   - Wire to core-sms interfaces
-
-5. **Achieve first build with upstream code**
-
-### Key Files to Review in AOSP Source
-
-When examining AOSP Messaging, pay special attention to:
-
-| File/Package | Why |
-|--------------|-----|
-| `BugleApplication.java` | App initialization |
-| `datamodel/` | Database and data management |
-| `sms/` | SMS sending/receiving |
-| `ui/` | Activities and UI |
-| `util/` | Utility classes (may have hidden API usage) |
-
-### Expected Challenges
-
-1. **Hidden Telephony APIs** - AOSP likely uses `ITelephony`, `SmsManager` hidden methods
-2. **Internal MMS APIs** - MMS handling often uses non-public classes
-3. **System permissions** - Some features may require system signature
-4. **Database access** - May use internal SMS provider APIs
+### Completed
+- [x] Git repository initialized
+- [x] Multi-module architecture designed
+- [x] Gradle scaffolding created
+- [x] Core-sms interfaces defined
+- [x] App module with manifest and receivers created
+- [x] Documentation written (ARCHITECTURE.md, UPSTREAM_UPDATE_GUIDE.md)
 
 ---
 
@@ -141,16 +128,16 @@ When examining AOSP Messaging, pay special attention to:
 
 **Start here:**
 1. Read this file
-2. Run `./gradlew assembleDebug` to verify build still works
-3. Clone AOSP Messaging source (see "Immediate Next Steps" above)
-4. Begin dependency audit
+2. Run `git status` to see current state
+3. Run the error check command above
+4. Begin with MMS library stubs
 
 **Key architectural constraint:**
 - sms-upstream/ NEVER contains Matrix or app-specific code
 - app/ NEVER imports from com.android.messaging.* directly
 - All coupling goes through core-sms/ interfaces
 
-**Documents to reference:**
-- [docs/ARCHITECTURE.md](ARCHITECTURE.md) - design principles
-- [docs/UPSTREAM_UPDATE_GUIDE.md](UPSTREAM_UPDATE_GUIDE.md) - update workflow
-- [sms-upstream/PATCHES.md](../sms-upstream/PATCHES.md) - patch tracking
+**AOSP Source Info:**
+- Source: https://android.googlesource.com/platform/packages/apps/Messaging
+- Commit: de315b762312dd1a5d2bbd16e62ef2bd123f61e5
+- Branch: main (current as of 2026-02-01)
