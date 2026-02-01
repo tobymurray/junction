@@ -1,0 +1,47 @@
+# Built application files
+*.apk
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+
+# Gradle files
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Android Studio
+*.iml
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Signing keys
+*.keystore
+*.jks
+!debug.keystore
+
+# Logs
+*.log
+
+# AOSP source (will be in aosp-source/, excluded from main project)
+/aosp-source/
+
+# Temporary files
+*.tmp
+*.bak
