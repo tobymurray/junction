@@ -35,7 +35,7 @@ public class MmsFileProvider extends FileProvider {
 
     @VisibleForTesting
     // PATCH-012: Changed authority to avoid conflict with stock AOSP Messaging
-    static final String AUTHORITY = "com.example.messaging.datamodel.MmsFileProvider";
+    static final String AUTHORITY = "com.technicallyrural.junction.datamodel.MmsFileProvider";
     private static final String RAW_MMS_DIR = "rawmms";
 
     /**

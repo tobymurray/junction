@@ -47,7 +47,7 @@ public class MediaScratchFileProvider extends FileProvider {
     // PATCH-012: Changed authority to avoid conflict with stock AOSP Messaging
     @VisibleForTesting
     public static final String AUTHORITY =
-            "com.example.messaging.datamodel.MediaScratchFileProvider";
+            "com.technicallyrural.junction.datamodel.MediaScratchFileProvider";
     private static final String MEDIA_SCRATCH_SPACE_DIR = "mediascratchspace";
 
     public static boolean isMediaScratchSpaceUri(final Uri uri) {

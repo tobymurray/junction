@@ -23,11 +23,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.messaging.app"
+    namespace = "com.technicallyrural.junction.app"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.example.messaging"
+        applicationId = "com.technicallyrural.junction"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1

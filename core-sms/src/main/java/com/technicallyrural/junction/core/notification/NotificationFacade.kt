@@ -1,7 +1,7 @@
-package com.example.messaging.core.notification
+package com.technicallyrural.junction.core.notification
 
-import com.example.messaging.core.store.Conversation
-import com.example.messaging.core.store.Message
+import com.technicallyrural.junction.core.store.Conversation
+import com.technicallyrural.junction.core.store.Message
 
 /**
  * Interface for displaying message notifications.

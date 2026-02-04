@@ -469,28 +469,28 @@
 
         <!-- ================================================================
              CONTENT PROVIDERS (from sms-upstream module)
-             Authorities use com.example.messaging prefix to avoid
+             Authorities use com.technicallyrural.junction prefix to avoid
              conflicts with stock AOSP Messaging app (PATCH-012)
              ================================================================ -->
 
         <!-- Messaging data content provider -->
         <provider
             android:name="com.android.messaging.datamodel.MessagingContentProvider"
-            android:authorities="com.example.messaging.datamodel.MessagingContentProvider"
+            android:authorities="com.technicallyrural.junction.datamodel.MessagingContentProvider"
             android:exported="false"
             android:grantUriPermissions="true" />
 
         <!-- MMS file provider for sharing MMS content -->
         <provider
             android:name="com.android.messaging.datamodel.MmsFileProvider"
-            android:authorities="com.example.messaging.datamodel.MmsFileProvider"
+            android:authorities="com.technicallyrural.junction.datamodel.MmsFileProvider"
             android:exported="false"
             android:grantUriPermissions="true" />
 
         <!-- Media scratch file provider for temporary media -->
         <provider
             android:name="com.android.messaging.datamodel.MediaScratchFileProvider"
-            android:authorities="com.example.messaging.datamodel.MediaScratchFileProvider"
+            android:authorities="com.technicallyrural.junction.datamodel.MediaScratchFileProvider"
             android:exported="false"
             android:grantUriPermissions="true" />
 

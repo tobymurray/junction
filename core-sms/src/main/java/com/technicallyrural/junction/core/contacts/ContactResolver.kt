@@ -1,4 +1,4 @@
-package com.example.messaging.core.contacts
+package com.technicallyrural.junction.core.contacts
 
 /**
  * Interface for resolving phone numbers to contact information.

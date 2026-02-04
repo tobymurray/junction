@@ -181,7 +181,7 @@ if (id == R.id.action_add) {
 **Status:** ✅ Complete
 **Rationale:** Avoid conflicts with stock AOSP Messaging app (com.android.messaging)
 **Files Modified:**
-- `com/android/messaging/datamodel/MessagingContentProvider.java`: Changed AUTHORITY from `com.android.messaging...` to `com.example.messaging...`
+- `com/android/messaging/datamodel/MessagingContentProvider.java`: Changed AUTHORITY from `com.android.messaging...` to `com.technicallyrural.junction...`
 - `com/android/messaging/datamodel/MmsFileProvider.java`: Same authority prefix change
 - `com/android/messaging/datamodel/MediaScratchFileProvider.java`: Same authority prefix change
 
@@ -193,7 +193,7 @@ public static final String AUTHORITY =
 
 // AFTER:
 public static final String AUTHORITY =
-        "com.example.messaging.datamodel.MessagingContentProvider";
+        "com.technicallyrural.junction.datamodel.MessagingContentProvider";
 ```
 
 **Notes:** This is required to install alongside the stock Messaging app during development/testing. The app manifest must declare matching authorities.

@@ -1,4 +1,4 @@
-package com.example.messaging.core.store
+package com.technicallyrural.junction.core.store
 
 import kotlinx.coroutines.flow.Flow
 

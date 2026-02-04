@@ -1,4 +1,4 @@
-package com.example.messaging.app.receiver
+package com.technicallyrural.junction.app.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context

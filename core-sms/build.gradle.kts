@@ -27,7 +27,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.messaging.core"
+    namespace = "com.technicallyrural.junction.core"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {

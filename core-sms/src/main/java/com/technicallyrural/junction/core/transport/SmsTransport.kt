@@ -1,4 +1,4 @@
-package com.example.messaging.core.transport
+package com.technicallyrural.junction.core.transport
 
 import android.app.PendingIntent
 

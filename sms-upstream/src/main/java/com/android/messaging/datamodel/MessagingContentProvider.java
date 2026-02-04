@@ -56,7 +56,7 @@ public class MessagingContentProvider extends ContentProvider {
     // PATCH-012: Changed authority to avoid conflict with stock AOSP Messaging
     @VisibleForTesting
     public static final String AUTHORITY =
-            "com.example.messaging.datamodel.MessagingContentProvider";
+            "com.technicallyrural.junction.datamodel.MessagingContentProvider";
     private static final String CONTENT_AUTHORITY = "content://" + AUTHORITY + '/';
 
     // Conversations query
