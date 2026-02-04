@@ -15,6 +15,9 @@ import android.widget.Filterable;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class BaseRecipientAdapter extends BaseAdapter implements Filterable {
 
     public static final int QUERY_TYPE_PHONE = 0;
@@ -22,6 +25,10 @@ public class BaseRecipientAdapter extends BaseAdapter implements Filterable {
 
     protected Context mContext;
     protected int mQueryType;
+    protected int mPreferredMaxResultCount;
+    protected CharSequence mCurrentConstraint;
+    protected List<RecipientEntry> mEntries = new ArrayList<>();
+    protected Object mPhotoManager;
 
     public BaseRecipientAdapter(Context context) {
         mContext = context;
@@ -29,6 +36,12 @@ public class BaseRecipientAdapter extends BaseAdapter implements Filterable {
 
     public BaseRecipientAdapter(Context context, int queryType) {
         mContext = context;
+        mQueryType = queryType;
+    }
+
+    public BaseRecipientAdapter(Context context, int preferredMaxResultCount, int queryType) {
+        mContext = context;
+        mPreferredMaxResultCount = preferredMaxResultCount;
         mQueryType = queryType;
     }
 
@@ -44,19 +57,71 @@ public class BaseRecipientAdapter extends BaseAdapter implements Filterable {
         return mContext;
     }
 
+    public void setPhotoManager(Object photoManager) {
+        mPhotoManager = photoManager;
+    }
+
+    /**
+     * Override this to force the adapter to always show the address.
+     */
+    public boolean forceShowAddress() {
+        return false;
+    }
+
+    /**
+     * Called to get matching recipients for address substitution.
+     */
+    public void getMatchingRecipients(ArrayList<String> addresses,
+            RecipientAlternatesAdapter.RecipientMatchCallback callback) {
+        // Default implementation - subclasses should override
+        if (callback != null) {
+            callback.matchesNotFound(new ArrayList<RecipientEntry>());
+        }
+    }
+
+    /**
+     * Clear any temporary entries.
+     */
+    protected void clearTempEntries() {
+        // Stub - subclasses may override
+    }
+
+    /**
+     * Update the adapter with new entries.
+     */
+    protected void updateEntries(List<RecipientEntry> entries) {
+        mEntries.clear();
+        if (entries != null) {
+            mEntries.addAll(entries);
+        }
+        notifyDataSetChanged();
+    }
+
     @Override
     public int getCount() {
-        return 0;
+        return mEntries.size();
     }
 
     @Override
     public RecipientEntry getItem(int position) {
+        if (position >= 0 && position < mEntries.size()) {
+            return mEntries.get(position);
+        }
         return null;
     }
 
     @Override
     public long getItemId(int position) {
         return position;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        RecipientEntry entry = getItem(position);
+        if (entry != null) {
+            return entry.getEntryType();
+        }
+        return 0;
     }
 
     @Override

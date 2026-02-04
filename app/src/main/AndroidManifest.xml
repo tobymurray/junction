@@ -71,6 +71,7 @@
          ==================================================================== -->
 
     <application
+        android:name="com.android.messaging.BugleApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -117,12 +118,202 @@
         </activity>
 
         <!-- ================================================================
-             SMS RECEIVERS (required for default SMS app)
+             UPSTREAM ACTIVITIES (from sms-upstream module)
              ================================================================ -->
 
-        <!-- Primary SMS receiver (when we are default SMS app) -->
+        <!-- Conversation List (main screen) -->
+        <activity
+            android:name="com.android.messaging.ui.conversationlist.ConversationListActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden|uiMode"
+            android:theme="@style/BugleTheme.ConversationListActivity" />
+
+        <!-- Archived Conversations -->
+        <activity
+            android:name="com.android.messaging.ui.conversationlist.ArchivedConversationListActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:theme="@style/BugleTheme"
+            android:parentActivityName="com.android.messaging.ui.conversationlist.ConversationListActivity" />
+
+        <!-- Single Conversation View -->
+        <activity
+            android:name="com.android.messaging.ui.conversation.ConversationActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:theme="@style/BugleTheme"
+            android:windowSoftInputMode="stateHidden|adjustResize"
+            android:parentActivityName="com.android.messaging.ui.conversationlist.ConversationListActivity" />
+
+        <!-- Launch Conversation (intent handler) -->
+        <activity
+            android:name="com.android.messaging.ui.conversation.LaunchConversationActivity"
+            android:exported="true"
+            android:theme="@style/Invisible"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SENDTO" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="sms" />
+                <data android:scheme="smsto" />
+                <data android:scheme="mms" />
+                <data android:scheme="mmsto" />
+            </intent-filter>
+        </activity>
+
+        <!-- Forward Message -->
+        <activity
+            android:name="com.android.messaging.ui.conversationlist.ForwardMessageActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:theme="@style/BugleTheme" />
+
+        <!-- Share Intent Handler -->
+        <activity
+            android:name="com.android.messaging.ui.conversationlist.ShareIntentActivity"
+            android:exported="true"
+            android:theme="@style/BugleTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/x-vcard" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity>
+
+        <!-- Settings Activities -->
+        <activity
+            android:name="com.android.messaging.ui.appsettings.SettingsActivity"
+            android:exported="false"
+            android:theme="@style/BugleTheme"
+            android:parentActivityName="com.android.messaging.ui.conversationlist.ConversationListActivity" />
+
+        <activity
+            android:name="com.android.messaging.ui.appsettings.ApplicationSettingsActivity"
+            android:exported="false"
+            android:theme="@style/BugleTheme"
+            android:parentActivityName="com.android.messaging.ui.appsettings.SettingsActivity" />
+
+        <activity
+            android:name="com.android.messaging.ui.appsettings.PerSubscriptionSettingsActivity"
+            android:exported="false"
+            android:theme="@style/BugleTheme"
+            android:parentActivityName="com.android.messaging.ui.appsettings.SettingsActivity" />
+
+        <activity
+            android:name="com.android.messaging.ui.appsettings.ApnSettingsActivity"
+            android:exported="false"
+            android:theme="@style/BugleTheme" />
+
+        <activity
+            android:name="com.android.messaging.ui.appsettings.ApnEditorActivity"
+            android:exported="false"
+            android:theme="@style/BugleTheme" />
+
+        <!-- Conversation Settings -->
+        <activity
+            android:name="com.android.messaging.ui.conversationsettings.PeopleAndOptionsActivity"
+            android:exported="false"
+            android:theme="@style/BugleTheme" />
+
+        <!-- Blocked Participants -->
+        <activity
+            android:name="com.android.messaging.ui.BlockedParticipantsActivity"
+            android:exported="false"
+            android:theme="@style/BugleTheme" />
+
+        <!-- VCard Viewer -->
+        <activity
+            android:name="com.android.messaging.ui.VCardDetailActivity"
+            android:exported="false"
+            android:theme="@style/BugleTheme" />
+
+        <!-- Photo Viewer -->
+        <activity
+            android:name="com.android.messaging.ui.photoviewer.BuglePhotoViewActivity"
+            android:exported="false"
+            android:theme="@style/PhotoViewTheme.Translucent" />
+
+        <!-- Attachment Chooser -->
+        <activity
+            android:name="com.android.messaging.ui.attachmentchooser.AttachmentChooserActivity"
+            android:exported="false"
+            android:theme="@style/BugleTheme" />
+
+        <!-- Permission Check -->
+        <activity
+            android:name="com.android.messaging.ui.PermissionCheckActivity"
+            android:exported="false"
+            android:theme="@style/BugleTheme" />
+
+        <!-- Class Zero SMS (flash messages) -->
+        <activity
+            android:name="com.android.messaging.ui.ClassZeroActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Dialog"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance" />
+
+        <!-- SMS Storage Low Warning -->
+        <activity
+            android:name="com.android.messaging.ui.SmsStorageLowWarningActivity"
+            android:exported="false"
+            android:theme="@style/BugleTheme" />
+
+        <!-- Widget Conversation Picker -->
+        <activity
+            android:name="com.android.messaging.ui.WidgetPickConversationActivity"
+            android:exported="true"
+            android:theme="@style/BugleTheme">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <!-- Remote Input Entrypoint -->
+        <activity
+            android:name="com.android.messaging.ui.RemoteInputEntrypointActivity"
+            android:exported="false"
+            android:theme="@style/Invisible"
+            android:noHistory="true" />
+
+        <!-- License Activity -->
+        <activity
+            android:name="com.android.messaging.ui.LicenseActivity"
+            android:exported="false"
+            android:theme="@style/BugleTheme" />
+
+        <!-- ================================================================
+             SMS RECEIVERS (from sms-upstream module)
+             ================================================================ -->
+
+        <!-- Primary SMS receiver (when we are default SMS app) - KLP+ -->
         <receiver
-            android:name=".receiver.SmsDeliverReceiver"
+            android:name="com.android.messaging.receiver.SmsDeliverReceiver"
             android:exported="true"
             android:permission="android.permission.BROADCAST_SMS">
             <intent-filter>
@@ -130,23 +321,35 @@
             </intent-filter>
         </receiver>
 
-        <!-- Fallback SMS receiver (when not default, for testing) -->
+        <!-- Legacy SMS receiver (secondary users, pre-KLP) -->
         <receiver
-            android:name=".receiver.SmsReceivedReceiver"
+            android:name="com.android.messaging.receiver.SmsReceiver"
             android:exported="true"
+            android:enabled="false"
             android:permission="android.permission.BROADCAST_SMS">
             <intent-filter>
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
 
+        <!-- SMS broadcast aborter (for default SMS app) -->
+        <receiver
+            android:name="com.android.messaging.receiver.AbortSmsReceiver"
+            android:exported="true"
+            android:enabled="false"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter android:priority="2147483647">
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
         <!-- ================================================================
-             MMS RECEIVERS
+             MMS RECEIVERS (from sms-upstream module)
              ================================================================ -->
 
-        <!-- MMS WAP push receiver (for MMS notifications) -->
+        <!-- Primary MMS WAP push receiver (when we are default SMS app) - KLP+ -->
         <receiver
-            android:name=".receiver.MmsWapPushReceiver"
+            android:name="com.android.messaging.receiver.MmsWapPushDeliverReceiver"
             android:exported="true"
             android:permission="android.permission.BROADCAST_WAP_PUSH">
             <intent-filter>
@@ -155,12 +358,92 @@
             </intent-filter>
         </receiver>
 
+        <!-- Legacy MMS WAP push receiver (pre-KLP) -->
+        <receiver
+            android:name="com.android.messaging.receiver.MmsWapPushReceiver"
+            android:exported="true"
+            android:enabled="false"
+            android:permission="android.permission.BROADCAST_WAP_PUSH">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.WAP_PUSH_RECEIVED" />
+                <data android:mimeType="application/vnd.wap.mms-message" />
+            </intent-filter>
+        </receiver>
+
+        <!-- MMS WAP push broadcast aborter (for default SMS app) -->
+        <receiver
+            android:name="com.android.messaging.receiver.AbortMmsWapPushReceiver"
+            android:exported="true"
+            android:enabled="false"
+            android:permission="android.permission.BROADCAST_WAP_PUSH">
+            <intent-filter android:priority="2147483647">
+                <action android:name="android.provider.Telephony.WAP_PUSH_RECEIVED" />
+                <data android:mimeType="application/vnd.wap.mms-message" />
+            </intent-filter>
+        </receiver>
+
         <!-- ================================================================
-             RESPOND VIA MESSAGE SERVICE (quick reply from call screen)
+             OTHER RECEIVERS (from sms-upstream module)
              ================================================================ -->
 
+        <!-- Boot and package replaced receiver -->
+        <receiver
+            android:name="com.android.messaging.receiver.BootAndPackageReplacedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Notification action receiver -->
+        <receiver
+            android:name="com.android.messaging.receiver.NotificationReceiver"
+            android:exported="false" />
+
+        <!-- Storage status receiver -->
+        <receiver
+            android:name="com.android.messaging.receiver.StorageStatusReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.DEVICE_STORAGE_LOW" />
+                <action android:name="android.intent.action.DEVICE_STORAGE_OK" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Default SMS subscription change receiver -->
+        <receiver
+            android:name="com.android.messaging.receiver.DefaultSmsSubscriptionChangeReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.telephony.action.DEFAULT_SMS_SUBSCRIPTION_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- SMS/MMS send status receiver -->
+        <receiver
+            android:name="com.android.messaging.receiver.SendStatusReceiver"
+            android:exported="false" />
+
+        <!-- ================================================================
+             SERVICES (from sms-upstream module)
+             ================================================================ -->
+
+        <!-- Action service for background messaging operations -->
         <service
-            android:name=".service.RespondViaMessageService"
+            android:name="com.android.messaging.datamodel.action.ActionServiceImpl"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="false" />
+
+        <!-- Background worker service -->
+        <service
+            android:name="com.android.messaging.datamodel.action.BackgroundWorkerService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="false" />
+
+        <!-- Respond via message service (required for default SMS app eligibility) -->
+        <service
+            android:name="com.android.messaging.datamodel.NoConfirmationSmsSendService"
             android:exported="true"
             android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE">
             <intent-filter>
@@ -173,20 +456,43 @@
             </intent-filter>
         </service>
 
-        <!-- ================================================================
-             HEADLESS SMS SEND SERVICE (for sending from other apps)
-             ================================================================ -->
+        <!-- Widget services -->
+        <service
+            android:name="com.android.messaging.widget.WidgetConversationListService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
 
         <service
-            android:name=".service.HeadlessSmsSendService"
-            android:exported="true"
-            android:permission="android.permission.SEND_SMS">
-            <intent-filter>
-                <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
-                <data android:scheme="sms" />
-                <data android:scheme="smsto" />
-            </intent-filter>
-        </service>
+            android:name="com.android.messaging.widget.WidgetConversationService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
+
+        <!-- ================================================================
+             CONTENT PROVIDERS (from sms-upstream module)
+             Authorities use com.example.messaging prefix to avoid
+             conflicts with stock AOSP Messaging app (PATCH-012)
+             ================================================================ -->
+
+        <!-- Messaging data content provider -->
+        <provider
+            android:name="com.android.messaging.datamodel.MessagingContentProvider"
+            android:authorities="com.example.messaging.datamodel.MessagingContentProvider"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
+        <!-- MMS file provider for sharing MMS content -->
+        <provider
+            android:name="com.android.messaging.datamodel.MmsFileProvider"
+            android:authorities="com.example.messaging.datamodel.MmsFileProvider"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
+        <!-- Media scratch file provider for temporary media -->
+        <provider
+            android:name="com.android.messaging.datamodel.MediaScratchFileProvider"
+            android:authorities="com.example.messaging.datamodel.MediaScratchFileProvider"
+            android:exported="false"
+            android:grantUriPermissions="true" />
 
     </application>
 

@@ -13,11 +13,15 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class RecipientAlternatesAdapter extends CursorAdapter {
 
+    /** Maximum number of lookups to perform in a single batch. */
+    public static final int MAX_LOOKUPS = 50;
+
     public interface RecipientMatchCallback {
-        void matchesFound(List<RecipientEntry> results);
+        void matchesFound(Map<String, RecipientEntry> results);
         void matchesNotFound(List<RecipientEntry> entries);
     }
 

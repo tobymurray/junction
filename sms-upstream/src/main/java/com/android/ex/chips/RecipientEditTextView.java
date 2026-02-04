@@ -9,14 +9,17 @@ package com.android.ex.chips;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.widget.MultiAutoCompleteTextView;
+import android.widget.TextView;
 
 import com.android.ex.chips.recipientchip.DrawableRecipientChip;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RecipientEditTextView extends MultiAutoCompleteTextView {
+public class RecipientEditTextView extends MultiAutoCompleteTextView
+        implements TextView.OnEditorActionListener {
 
     public interface RecipientChipDeletedListener {
         void onRecipientChipDeleted(DrawableRecipientChip chip);
@@ -28,14 +31,17 @@ public class RecipientEditTextView extends MultiAutoCompleteTextView {
 
     public RecipientEditTextView(Context context) {
         super(context);
+        setOnEditorActionListener(this);
     }
 
     public RecipientEditTextView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        setOnEditorActionListener(this);
     }
 
     public RecipientEditTextView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        setOnEditorActionListener(this);
     }
 
     public void setTokenizer(Tokenizer tokenizer) {
@@ -66,6 +72,10 @@ public class RecipientEditTextView extends MultiAutoCompleteTextView {
         // Stub
     }
 
+    public void removeRecipientEntry(RecipientEntry entry) {
+        // Stub - removes a recipient by entry
+    }
+
     public void replaceChip(DrawableRecipientChip chip, RecipientEntry entry) {
         // Stub
     }
@@ -92,5 +102,22 @@ public class RecipientEditTextView extends MultiAutoCompleteTextView {
 
     public void setDropdownChipLayouter(DropdownChipLayouter layouter) {
         // Stub
+    }
+
+    /**
+     * Controls whether recipients list shrinks when focus is lost.
+     */
+    public void setOnFocusListShrinkRecipients(boolean shrinkOnFocusLoss) {
+        // Stub
+    }
+
+    /**
+     * Called when an editor action occurs on this view.
+     * Subclasses can override this to handle the action.
+     */
+    @Override
+    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+        // Default implementation does nothing - subclasses may override
+        return false;
     }
 }

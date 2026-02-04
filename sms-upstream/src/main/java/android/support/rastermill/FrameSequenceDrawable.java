@@ -47,6 +47,14 @@ public class FrameSequenceDrawable extends Drawable {
         // Stub
     }
 
+    public void destroy() {
+        // Stub - releases resources
+    }
+
+    public boolean isDestroyed() {
+        return false;
+    }
+
     public boolean isRunning() {
         return false;
     }

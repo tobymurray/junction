@@ -30,10 +30,22 @@ import java.util.Map;
 public class CustomVCardEntry extends VCardEntry {
     // List of properties keyed by their name for easy lookup
     private final Map<String, VCardProperty> mAllProperties;
+    private java.util.List<CustomVCardEntry> mChildren;
 
     public CustomVCardEntry(int vCardType, Account account) {
         super(vCardType, account);
         mAllProperties = new ArrayMap<String, VCardProperty>();
+    }
+
+    public void addChild(CustomVCardEntry child) {
+        if (mChildren == null) {
+            mChildren = new java.util.ArrayList<>();
+        }
+        mChildren.add(child);
+    }
+
+    public java.util.List<CustomVCardEntry> getChildren() {
+        return mChildren;
     }
 
     @Override

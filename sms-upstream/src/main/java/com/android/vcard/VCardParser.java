@@ -8,7 +8,16 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public abstract class VCardParser {
-    public abstract void parse(InputStream is, VCardInterpreter interpreter)
-            throws IOException, VCardException;
+    protected VCardInterpreter mInterpreter;
+
+    public void addInterpreter(VCardInterpreter interpreter) {
+        mInterpreter = interpreter;
+    }
+
+    /**
+     * Parse the vCard from the input stream.
+     */
+    public abstract void parse(InputStream is) throws IOException, VCardException;
+
     public abstract void cancel();
 }

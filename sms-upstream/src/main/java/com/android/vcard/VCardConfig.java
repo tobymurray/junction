@@ -4,6 +4,7 @@
 package com.android.vcard;
 
 public class VCardConfig {
+    public static final int VCARD_TYPE_UNKNOWN = 0x0000000;
     public static final int VCARD_TYPE_V21_GENERIC = 0x0000001;
     public static final int VCARD_TYPE_V30_GENERIC = 0x0000002;
     public static final int VCARD_TYPE_V40_GENERIC = 0x0000004;

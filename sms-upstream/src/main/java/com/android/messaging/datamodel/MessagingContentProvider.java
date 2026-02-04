@@ -53,9 +53,10 @@ import java.io.PrintWriter;
 public class MessagingContentProvider extends ContentProvider {
     private static final String TAG = LogUtil.BUGLE_TAG;
 
+    // PATCH-012: Changed authority to avoid conflict with stock AOSP Messaging
     @VisibleForTesting
     public static final String AUTHORITY =
-            "com.android.messaging.datamodel.MessagingContentProvider";
+            "com.example.messaging.datamodel.MessagingContentProvider";
     private static final String CONTENT_AUTHORITY = "content://" + AUTHORITY + '/';
 
     // Conversations query

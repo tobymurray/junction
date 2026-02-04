@@ -12,9 +12,8 @@ public class VCardParser_V21 extends VCardParser {
     public VCardParser_V21(int vcardType) {}
 
     @Override
-    public void parse(InputStream is, VCardInterpreter interpreter)
-            throws IOException, VCardException {
-        // Stub
+    public void parse(InputStream is) throws IOException, VCardException {
+        // Stub - would parse V21 format vCard
     }
 
     @Override

@@ -4,31 +4,55 @@
 package com.android.ex.photo.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
-import androidx.viewpager.widget.PagerAdapter;
-import android.view.View;
-import android.view.ViewGroup;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
 
-public class PhotoPagerAdapter extends PagerAdapter {
+import com.android.ex.photo.fragments.PhotoViewFragment;
 
-    public PhotoPagerAdapter(Context context, android.app.FragmentManager fm,
-            Cursor cursor, float maxScale, boolean displayFullScreen) {
+public class PhotoPagerAdapter extends FragmentStatePagerAdapter {
+
+    protected Context mContext;
+    protected Cursor mCursor;
+    protected float mMaxScale;
+    protected boolean mThumbsFullScreen;
+
+    public PhotoPagerAdapter(Context context, FragmentManager fm, Cursor cursor,
+            float maxScale, boolean thumbsFullScreen) {
+        super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
+        mContext = context;
+        mCursor = cursor;
+        mMaxScale = maxScale;
+        mThumbsFullScreen = thumbsFullScreen;
     }
 
-    public void setCursor(Cursor cursor) {
-    }
-
-    public Cursor getCursor() {
-        return null;
+    @Override
+    public Fragment getItem(int position) {
+        return createPhotoViewFragment(null, position, false);
     }
 
     @Override
     public int getCount() {
-        return 0;
+        return mCursor != null ? mCursor.getCount() : 0;
     }
 
-    @Override
-    public boolean isViewFromObject(View view, Object object) {
-        return false;
+    protected PhotoViewFragment createPhotoViewFragment(Intent intent, int position,
+            boolean onlyShowSpinner) {
+        return PhotoViewFragment.newInstance(intent, position, onlyShowSpinner);
+    }
+
+    public String getPhotoUri(Cursor cursor) {
+        return null;
+    }
+
+    public String getContentType(Cursor cursor) {
+        return null;
+    }
+
+    public void swapCursor(Cursor newCursor) {
+        mCursor = newCursor;
+        notifyDataSetChanged();
     }
 }

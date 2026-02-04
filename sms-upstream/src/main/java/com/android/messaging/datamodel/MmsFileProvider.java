@@ -34,7 +34,8 @@ public class MmsFileProvider extends FileProvider {
     private static final String TAG = LogUtil.BUGLE_TAG;
 
     @VisibleForTesting
-    static final String AUTHORITY = "com.android.messaging.datamodel.MmsFileProvider";
+    // PATCH-012: Changed authority to avoid conflict with stock AOSP Messaging
+    static final String AUTHORITY = "com.example.messaging.datamodel.MmsFileProvider";
     private static final String RAW_MMS_DIR = "rawmms";
 
     /**

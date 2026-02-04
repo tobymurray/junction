@@ -14,17 +14,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!--
-        Base application theme, dependent on API level. This theme is replaced
-        by BugleBaseTheme from res/values-vXX/styles.xml on newer devices.
+        Base application theme. Uses DayNight to support dark mode.
+        PATCH-013: Changed to DayNight theme for dark mode support.
     -->
-    <style name="BugleBaseTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!--
-            Theme customizations available in newer API levels can go in
-            res/values-vXX/styles.xml, while customizations related to
-            backward-compatibility can go here.
-        -->
+    <style name="BugleBaseTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
+        <!-- Fix edge-to-edge: don't draw under system bars by default -->
+        <item name="android:fitsSystemWindows">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="27">shortEdges</item>
     </style>
 
 
@@ -55,7 +53,8 @@
     </style>
 
     <style name="BugleTheme.ConversationListActivity" parent="BugleTheme">
-        <item name="android:windowBackground">@android:color/background_light</item>
+        <!-- Use theme-appropriate background color for dark mode support -->
+        <item name="android:windowBackground">?android:attr/colorBackground</item>
     </style>
 
     <style name="BugleTheme.ArchivedConversationListActivity" parent="BugleTheme.ConversationListActivity">
@@ -99,6 +98,13 @@
 
     <style name="ConversationActionBarTitleTextStyle" parent="BugleActionBarTitleTextStyle">
       <item name="android:background">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <!-- Stub for photo viewer theme from AOSP photo library -->
+    <style name="PhotoViewTheme.Translucent" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
     </style>
 
     <style name="BuglePhotoViewTheme" parent="PhotoViewTheme.Translucent">

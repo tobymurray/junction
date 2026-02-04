@@ -16,7 +16,7 @@
 -->
 <resources>
     <declare-styleable name="ContactIconView">
-        <attr name="iconSize">
+        <attr name="contactIconSize">
             <enum name="normal" value="0" />
             <enum name="large" value="1" />
             <enum name="small" value="2" />
@@ -58,4 +58,23 @@
         </attr>
     </declare-styleable>
     <attr name="apnPreferenceStyle" format="reference" />
+
+    <!-- Attributes for RecipientEditTextView from chips library stub -->
+    <declare-styleable name="RecipientEditTextView">
+        <attr name="unselectedChipTextColor" format="color" />
+        <attr name="unselectedChipBackgroundColor" format="color" />
+        <attr name="avatarPosition" format="enum">
+            <enum name="start" value="0" />
+            <enum name="end" value="1" />
+        </attr>
+        <attr name="chipHeight" format="dimension" />
+        <attr name="imageSpanAlignment" format="enum">
+            <enum name="baseline" value="0" />
+            <enum name="bottom" value="1" />
+        </attr>
+        <attr name="chipPadding" format="dimension" />
+        <attr name="chipBackground" format="reference|color" />
+        <attr name="chipTextSize" format="dimension" />
+        <attr name="chipDeleteIcon" format="reference" />
+    </declare-styleable>
 </resources>

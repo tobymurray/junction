@@ -1,19 +1,30 @@
 package com.example.messaging.app.ui
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.android.messaging.ui.conversationlist.ConversationListActivity
 
 /**
  * Main entry point for the messaging application.
  *
- * This activity will be replaced with proper implementation once
- * upstream AOSP source is integrated. For now, it's a placeholder
- * to allow the project to build.
+ * This activity serves as a trampoline to the upstream AOSP Messaging UI.
+ * It redirects to ConversationListActivity which shows the list of conversations.
  */
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // TODO: Set up UI, check permissions, handle intents
+
+        // Launch the upstream conversation list activity
+        val intent = Intent(this, ConversationListActivity::class.java)
+
+        // Forward any extras from the launching intent
+        this.intent?.extras?.let { extras ->
+            intent.putExtras(extras)
+        }
+
+        startActivity(intent)
+        finish() // Close this trampoline activity
     }
 }

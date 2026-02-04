@@ -72,11 +72,11 @@ public class ApplicationSettingsActivity extends BugleActionBarActivity {
 
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
-        switch (item.getItemId()) {
-        case android.R.id.home:
+        final int id = item.getItemId();
+        if (id == android.R.id.home) {
             NavUtils.navigateUpFromSameTask(this);
             return true;
-        case R.id.action_license:
+        } else if (id == R.id.action_license) {
             final Intent intent = new Intent(this, LicenseActivity.class);
             startActivity(intent);
             return true;

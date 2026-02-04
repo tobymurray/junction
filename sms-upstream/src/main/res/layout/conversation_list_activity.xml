@@ -14,10 +14,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
+<!-- PATCH-013: Added fitsSystemWindows for edge-to-edge display -->
 <fragment
     xmlns:android="http://schemas.android.com/apk/res/android"
     class="com.android.messaging.ui.conversationlist.ConversationListFragment"
     android:id="@+id/conversation_list_fragment"
-    android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+    android:fitsSystemWindows="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent" />

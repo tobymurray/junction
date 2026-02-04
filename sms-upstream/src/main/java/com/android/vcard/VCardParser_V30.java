@@ -12,9 +12,8 @@ public class VCardParser_V30 extends VCardParser {
     public VCardParser_V30(int vcardType) {}
 
     @Override
-    public void parse(InputStream is, VCardInterpreter interpreter)
-            throws IOException, VCardException {
-        // Stub
+    public void parse(InputStream is) throws IOException, VCardException {
+        // Stub - would parse V30 format vCard
     }
 
     @Override

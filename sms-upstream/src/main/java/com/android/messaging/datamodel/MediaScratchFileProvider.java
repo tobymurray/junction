@@ -44,9 +44,10 @@ public class MediaScratchFileProvider extends FileProvider {
     private static final SimpleArrayMap<Uri, String> sUriToDisplayNameMap =
             new SimpleArrayMap<Uri, String>();
 
+    // PATCH-012: Changed authority to avoid conflict with stock AOSP Messaging
     @VisibleForTesting
     public static final String AUTHORITY =
-            "com.android.messaging.datamodel.MediaScratchFileProvider";
+            "com.example.messaging.datamodel.MediaScratchFileProvider";
     private static final String MEDIA_SCRATCH_SPACE_DIR = "mediascratchspace";
 
     public static boolean isMediaScratchSpaceUri(final Uri uri) {

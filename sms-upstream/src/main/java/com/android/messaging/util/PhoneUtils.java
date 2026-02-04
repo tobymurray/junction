@@ -16,6 +16,7 @@
 
 package com.android.messaging.util;
 
+import android.app.role.RoleManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -24,6 +25,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.provider.Settings;
 import android.provider.Telephony;
 import android.telephony.PhoneNumberUtils;
@@ -892,10 +894,18 @@ public abstract class PhoneUtils {
 
     /**
      * Is Messaging the default SMS app?
-     * - On KLP+ this checks the system setting.
+     * - On Android 10+ (Q) this checks RoleManager for the SMS role.
+     * - On KLP to P this checks the system setting.
      * - On JB (and below) this always returns true, since the setting was added in KLP.
      */
     public boolean isDefaultSmsApp() {
+        // Android 10+ uses RoleManager instead of the old Telephony setting
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            final RoleManager roleManager = mContext.getSystemService(RoleManager.class);
+            if (roleManager != null) {
+                return roleManager.isRoleHeld(RoleManager.ROLE_SMS);
+            }
+        }
         if (OsUtil.isAtLeastKLP()) {
             final String configuredApplication = Telephony.Sms.getDefaultSmsPackage(mContext);
             return  mContext.getPackageName().equals(configuredApplication);
@@ -909,6 +919,14 @@ public abstract class PhoneUtils {
      * @return the package name of default SMS app
      */
     public String getDefaultSmsApp() {
+        // Android 10+ uses RoleManager - check if we hold the role first
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            final RoleManager roleManager = mContext.getSystemService(RoleManager.class);
+            if (roleManager != null && roleManager.isRoleHeld(RoleManager.ROLE_SMS)) {
+                return mContext.getPackageName();
+            }
+        }
+        // Fall back to the Telephony API for other apps or older Android versions
         if (OsUtil.isAtLeastKLP()) {
             return Telephony.Sms.getDefaultSmsPackage(mContext);
         }

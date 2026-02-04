@@ -16,8 +16,10 @@
 
 package com.android.messaging.ui.conversationlist;
 
+import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.provider.Telephony;
 import androidx.appcompat.app.ActionBar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,9 +27,13 @@ import android.view.MenuItem;
 import com.android.messaging.R;
 import com.android.messaging.ui.UIIntents;
 import com.android.messaging.util.DebugUtils;
+import com.android.messaging.util.PhoneUtils;
 import com.android.messaging.util.Trace;
 
 public class ConversationListActivity extends AbstractConversationListActivity {
+    // PATCH-014: Request code for default SMS app prompt
+    private static final int REQUEST_SET_DEFAULT_SMS_APP = 1001;
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         Trace.beginSection("ConversationListActivity.onCreate");
@@ -35,6 +41,21 @@ public class ConversationListActivity extends AbstractConversationListActivity {
         setContentView(R.layout.conversation_list_activity);
         Trace.endSection();
         invalidateActionBar();
+
+        // PATCH-014: Prompt to become default SMS app on first launch
+        promptForDefaultSmsAppIfNeeded();
+    }
+
+    /**
+     * PATCH-014: Prompt the user to set this app as the default SMS app.
+     * This is required for the app to send and receive SMS messages.
+     */
+    private void promptForDefaultSmsAppIfNeeded() {
+        if (!PhoneUtils.getDefault().isDefaultSmsApp()) {
+            final Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+            intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
+            startActivityForResult(intent, REQUEST_SET_DEFAULT_SMS_APP);
+        }
     }
 
     @Override
@@ -83,22 +104,22 @@ public class ConversationListActivity extends AbstractConversationListActivity {
 
     @Override
     public boolean onOptionsItemSelected(final MenuItem menuItem) {
-        switch(menuItem.getItemId()) {
-            case R.id.action_start_new_conversation:
-                onActionBarStartNewConversation();
-                return true;
-            case R.id.action_settings:
-                onActionBarSettings();
-                return true;
-            case R.id.action_debug_options:
-                onActionBarDebug();
-                return true;
-            case R.id.action_show_archived:
-                onActionBarArchived();
-                return true;
-            case R.id.action_show_blocked_contacts:
-                onActionBarBlockedParticipants();
-                return true;
+        final int id = menuItem.getItemId();
+        if (id == R.id.action_start_new_conversation) {
+            onActionBarStartNewConversation();
+            return true;
+        } else if (id == R.id.action_settings) {
+            onActionBarSettings();
+            return true;
+        } else if (id == R.id.action_debug_options) {
+            onActionBarDebug();
+            return true;
+        } else if (id == R.id.action_show_archived) {
+            onActionBarArchived();
+            return true;
+        } else if (id == R.id.action_show_blocked_contacts) {
+            onActionBarBlockedParticipants();
+            return true;
         }
         return super.onOptionsItemSelected(menuItem);
     }
