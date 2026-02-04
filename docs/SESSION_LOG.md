@@ -5,6 +5,63 @@ Each session should update this file before stopping.
 
 ---
 
+## Session 4 - 2026-02-03 (Status Evaluation)
+
+### Purpose
+Evaluated README.md Status section accuracy against actual codebase state.
+
+### Findings
+
+The README Status section was significantly outdated. Multiple items marked incomplete were actually done:
+
+| Status Item | Was | Should Be |
+|------------|-----|-----------|
+| AOSP source vendored | Unchecked | ✅ Complete |
+| Hidden API patches applied | Unchecked | ✅ Complete (14 patches) |
+| First successful build | Unchecked | ✅ Complete (24MB APK) |
+| First successful install | Unchecked | ✅ Complete |
+| SMS send/receive working | Unchecked | ✅ Complete |
+
+### Updates Made
+- [x] Updated Target Configuration table (SDK 36, AGP 9.0.0, Gradle 9.3.1)
+- [x] Fixed Status checklist (9 items now checked, 6 new items added)
+- [x] Added "Status Evaluation & Plan" section with:
+  - Current Accuracy Assessment table
+  - Verified Current State summary
+  - Remaining Work (Actionable) with 5 phases
+  - Execution Plan table with 15 steps
+
+### No Code Changes
+This session was documentation-only per requirements.
+
+---
+
+## Session 3 - 2026-02-03
+
+### Completed
+
+**All Compilation Errors Fixed**
+- [x] MMS library stubs created (android/support/v7/mms/)
+- [x] R.id switch statements converted to if-else (10 files)
+- [x] Resource conflicts resolved (iconSize → contactIconSize)
+- [x] Missing styles added (PhotoViewTheme.Translucent)
+- [x] Chips library attributes added
+- [x] CustomVCardEntry child support added
+- [x] ContentProvider authorities changed to com.technicallyrural.junction.*
+
+**SMS Functionality**
+- [x] Default SMS app prompt added on startup
+- [x] Theme updated for dark mode and edge-to-edge
+- [x] Package renamed from com.example.messaging to com.technicallyrural.junction
+- [x] Successful build (24MB debug APK)
+- [x] Successful install and SMS send/receive verified
+
+### Git Commits
+- d058257: Get SMS working
+- 1b46a61: Rename package
+
+---
+
 ## Session 2 - 2026-02-01
 
 ### Completed
@@ -72,46 +129,6 @@ Library modules have non-final R.id values. Files with switch statements:
 
 ---
 
-## Next Session: FIX REMAINING COMPILATION ERRORS
-
-### Priority Order
-
-1. **MMS Library Stubs** (highest priority)
-   - These are critical for core SMS/MMS functionality
-   - Create stubs in: `sms-upstream/src/main/java/androidx/appcompat/mms/`
-
-2. **R.id Switch Statements**
-   - Convert all switch(R.id.xxx) to if-else chains
-   - Files: ContactPickerFragment, ConversationFragment, others
-
-3. **Additional Stub Fixes**
-   - Fix method signatures in chip stubs
-   - Fix BuglePhotoViewController
-
-### Commands to Resume
-
-```bash
-# Check current working directory
-pwd  # Should be /home/toby/AndroidStudioProjects/AospMessaging
-
-# Verify build still fails with expected errors
-ANDROID_HOME=~/Android/Sdk ./gradlew :sms-upstream:compileDebugJavaWithJavac 2>&1 | grep "error:" | wc -l
-
-# List MMS-related errors
-ANDROID_HOME=~/Android/Sdk ./gradlew :sms-upstream:compileDebugJavaWithJavac 2>&1 | grep "androidx.appcompat.mms"
-```
-
-### Key File Locations
-
-| What | Where |
-|------|-------|
-| AOSP source | sms-upstream/src/main/java/com/android/messaging/ |
-| Stub classes | sms-upstream/src/main/java/{android.support,com.android.ex,com.android.vcard}/ |
-| Build config | sms-upstream/build.gradle.kts |
-| Version catalog | gradle/libs.versions.toml |
-
----
-
 ## Session 1 - 2026-01-31
 
 ### Completed
@@ -127,10 +144,10 @@ ANDROID_HOME=~/Android/Sdk ./gradlew :sms-upstream:compileDebugJavaWithJavac 2>&
 ## Resume Notes (for next session)
 
 **Start here:**
-1. Read this file
-2. Run `git status` to see current state
-3. Run the error check command above
-4. Begin with MMS library stubs
+1. Read `README.md` section "Status Evaluation & Plan"
+2. Run `git status` and `git log -5 --oneline`
+3. Run `./gradlew assembleDebug` to verify build works
+4. Pick next uncompleted step from Execution Plan table
 
 **Key architectural constraint:**
 - sms-upstream/ NEVER contains Matrix or app-specific code
@@ -141,3 +158,5 @@ ANDROID_HOME=~/Android/Sdk ./gradlew :sms-upstream:compileDebugJavaWithJavac 2>&
 - Source: https://android.googlesource.com/platform/packages/apps/Messaging
 - Commit: de315b762312dd1a5d2bbd16e62ef2bd123f61e5
 - Branch: main (current as of 2026-02-01)
+
+**Current Priority:** Implement core-sms interface adapters (Steps 1-5 in Execution Plan)
