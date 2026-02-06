@@ -143,7 +143,8 @@ All permissions are public SDK permissions:
 - [x] First successful install
 - [x] SMS send/receive working
 - [ ] MMS send/receive verified
-- [ ] Core-sms interface implementations wired
+- [x] Core-sms interface implementations created (5 adapters in sms-upstream/adapter/)
+- [ ] Core-sms adapters wired via dependency injection
 - [ ] Unit test coverage
 - [ ] Integration test coverage
 - [ ] GrapheneOS compatibility verified
@@ -243,11 +244,11 @@ Each step is independently completable and ends with a verifiable outcome.
 
 | Step | Task | Files/Modules | Verification | Dependencies |
 |------|------|---------------|--------------|--------------|
-| 1 | Create `SmsTransportImpl` adapter class | `sms-upstream/src/main/java/.../adapter/SmsTransportImpl.kt` | Class compiles, implements `SmsTransport` | None |
-| 2 | Create `MessageStoreImpl` adapter class | `sms-upstream/src/main/java/.../adapter/MessageStoreImpl.kt` | Class compiles, implements `MessageStore` | None |
-| 3 | Create `ContactResolverImpl` adapter class | `sms-upstream/src/main/java/.../adapter/ContactResolverImpl.kt` | Class compiles, implements `ContactResolver` | None |
-| 4 | Create `NotificationFacadeImpl` adapter class | `sms-upstream/src/main/java/.../adapter/NotificationFacadeImpl.kt` | Class compiles, implements `NotificationFacade` | None |
-| 5 | Create `SmsReceiverImpl` adapter class | `sms-upstream/src/main/java/.../adapter/SmsReceiverImpl.kt` | Class compiles, implements `SmsReceiver` | None |
+| ~~1~~ | ~~Create `SmsTransportImpl` adapter class~~ | ~~`sms-upstream/src/main/java/.../adapter/SmsTransportImpl.kt`~~ | ✅ Complete (2026-02-05) | None |
+| ~~2~~ | ~~Create `MessageStoreImpl` adapter class~~ | ~~`sms-upstream/src/main/java/.../adapter/MessageStoreImpl.kt`~~ | ✅ Complete (2026-02-05) | None |
+| ~~3~~ | ~~Create `ContactResolverImpl` adapter class~~ | ~~`sms-upstream/src/main/java/.../adapter/ContactResolverImpl.kt`~~ | ✅ Complete (2026-02-05) | None |
+| ~~4~~ | ~~Create `NotificationFacadeImpl` adapter class~~ | ~~`sms-upstream/src/main/java/.../adapter/NotificationFacadeImpl.kt`~~ | ✅ Complete (2026-02-05) | None |
+| ~~5~~ | ~~Create `SmsReceiverDispatcher` adapter class~~ | ~~`sms-upstream/src/main/java/.../adapter/SmsReceiverDispatcher.kt`~~ | ✅ Complete (2026-02-05) | None |
 | 6 | Add dependency injection setup | `app/build.gradle.kts`, `app/src/main/java/.../di/` | Interfaces can be injected into app components | Steps 1-5 |
 | 7 | Refactor app module to use interfaces | `app/src/main/java/` (receivers, services) | No direct `com.android.messaging.*` imports in app module | Step 6 |
 | 8 | Add unit test infrastructure | `core-sms/build.gradle.kts`, `core-sms/src/test/` | `./gradlew :core-sms:test` runs | None |

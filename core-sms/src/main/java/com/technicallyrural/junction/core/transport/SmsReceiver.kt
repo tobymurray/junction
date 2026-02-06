@@ -101,5 +101,5 @@ object SmsReceiverRegistry {
         this.listener = null
     }
 
-    internal fun getListener(): SmsReceiveListener? = listener
+    fun getListener(): SmsReceiveListener? = listener
 }

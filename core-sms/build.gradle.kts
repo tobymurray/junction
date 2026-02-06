@@ -63,6 +63,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.viewmodel)
 
+    // Coroutines for async operations
+    api(libs.kotlinx.coroutines.core)
+    api(libs.kotlinx.coroutines.android)
+
     // Testing
     testImplementation(libs.junit)
 }

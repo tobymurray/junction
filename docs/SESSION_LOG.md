@@ -5,6 +5,73 @@ Each session should update this file before stopping.
 
 ---
 
+## Session 5 - 2026-02-05 (SmsTransport Adapter)
+
+### Purpose
+Implement Step 1 of the Execution Plan: Create SmsTransportImpl adapter class.
+
+### Completed
+- [x] **Created `SmsTransportImpl.kt`** in `sms-upstream/src/main/java/com/android/messaging/adapter/`
+  - Implements `SmsTransport` interface from core-sms
+  - Bridges to `SmsSender` for SMS sending
+  - Bridges to `PhoneUtils` for subscription management
+  - Bridges to `MmsConfig` for capability checks
+  - Handles multipart SMS via SmsSender's internal message division
+
+### Implementation Details
+
+| Method | Implementation Status |
+|--------|----------------------|
+| `sendSms()` | ✅ Full - calls SmsSender.sendMessage() |
+| `sendMultipartSms()` | ✅ Full - joins parts, SmsSender handles division |
+| `sendMms()` | ⏳ Stub - returns Failure (requires PDU building) |
+| `getAvailableSubscriptions()` | ✅ Full - uses PhoneUtils.toLMr1() |
+| `getDefaultSmsSubscription()` | ✅ Full - uses PhoneUtils |
+| `canSendSms()` | ✅ Full - checks isSmsCapable + hasSim |
+| `canSendMms()` | ✅ Full - uses MmsConfig.groupMmsEnabled |
+
+### Technical Notes
+- `SmsException` is package-private in AOSP code, so we catch generic `Exception`
+- `MmsConfig` doesn't have a direct `isMmsEnabled` - using `groupMmsEnabled` as proxy
+- Message URIs generated with incrementing counter for tracking
+- Delivery reports requested only when callback provided
+
+### Verification
+- `./gradlew :sms-upstream:compileDebugKotlin` - PASSED
+- `./gradlew assembleDebug` - PASSED (full build)
+
+### Additional Adapters Completed
+
+**Step 2: MessageStoreImpl** ✅
+- Full conversation and message query support via Flow
+- Uses ContentObserver for reactive updates
+- Bridges to DatabaseHelper and MessagingContentProvider
+- Added kotlinx-coroutines dependency to version catalog
+
+**Step 3: ContactResolverImpl** ✅
+- Uses Android ContactsContract for contact lookup
+- Phone number normalization via PhoneUtils
+- Batch contact resolution support
+
+**Step 4: NotificationFacadeImpl** ✅
+- Bridges to BugleNotifications for message notifications
+- Creates notification channels for Android O+
+- Handles conversation notification cancellation
+
+**Step 5: SmsReceiverDispatcher** ✅
+- Dispatcher pattern (not direct implementation)
+- Bridges AOSP broadcast receivers to SmsReceiverRegistry
+- Made `SmsReceiverRegistry.getListener()` public for cross-module access
+
+### All Phase 1 Steps Complete
+Steps 1-5 of the Execution Plan are now finished. All 5 core-sms interface adapters are implemented in `sms-upstream/src/main/java/com/android/messaging/adapter/`.
+
+### Next Steps
+Continue with Execution Plan Step 6:
+- Step 6: Add dependency injection setup
+
+---
+
 ## Session 4 - 2026-02-03 (Status Evaluation)
 
 ### Purpose
