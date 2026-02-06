@@ -24,6 +24,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.android.messaging.Factory;
 import com.android.messaging.R;
+import com.android.messaging.datamodel.BugleNotifications;
 import com.android.messaging.ui.UIIntents;
 import com.android.messaging.util.PendingIntentConstants;
 import com.android.messaging.util.PhoneUtils;
@@ -65,7 +66,8 @@ public class SmsStorageStatusManager {
         final PendingIntent pendingIntent = UIIntents.get()
                 .getPendingIntentForLowStorageNotifications(context);
 
-        final NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+        final NotificationCompat.Builder builder = new NotificationCompat.Builder(context,
+                BugleNotifications.CHANNEL_ID_ERRORS);
         builder.setContentTitle(resources.getString(R.string.sms_storage_low_title))
                 .setTicker(resources.getString(R.string.sms_storage_low_notification_ticker))
                 .setSmallIcon(R.drawable.ic_failed_light)

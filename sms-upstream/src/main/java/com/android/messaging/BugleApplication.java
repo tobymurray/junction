@@ -28,6 +28,7 @@ import androidx.appcompat.mms.CarrierConfigValuesLoader;
 import androidx.appcompat.mms.MmsManager;
 import android.telephony.CarrierConfigManager;
 
+import com.android.messaging.datamodel.BugleNotifications;
 import com.android.messaging.datamodel.DataModel;
 import com.android.messaging.receiver.SmsReceiver;
 import com.android.messaging.sms.ApnDatabase;
@@ -110,6 +111,9 @@ public class BugleApplication extends Application implements UncaughtExceptionHa
         maybeStartProfiling();
 
         BugleApplication.updateAppConfig(context);
+
+        // Create notification channels (required for Android O+)
+        BugleNotifications.createNotificationChannels();
 
         // Initialize MMS lib
         initMmsLib(context, bugleGservices, carrierConfigValuesLoader);

@@ -789,7 +789,8 @@ public abstract class MessageNotificationState extends NotificationState {
             bigText.append("\n\n").append(statusText);
         }
 
-        final NotificationCompat.Builder notifBuilder = new NotificationCompat.Builder(context);
+        final NotificationCompat.Builder notifBuilder = new NotificationCompat.Builder(context,
+                BugleNotifications.CHANNEL_ID_MESSAGES);
         final NotificationCompat.Style notifStyle =
                 new NotificationCompat.BigTextStyle(notifBuilder).bigText(bigText);
         notifBuilder.setStyle(notifStyle);
@@ -1234,7 +1235,8 @@ public abstract class MessageNotificationState extends NotificationState {
                 }
                 if (failedMessages.size() > 0) {
                     final NotificationCompat.Builder builder =
-                            new NotificationCompat.Builder(context);
+                            new NotificationCompat.Builder(context,
+                                    BugleNotifications.CHANNEL_ID_ERRORS);
 
                     CharSequence line1;
                     CharSequence line2;

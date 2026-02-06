@@ -16,7 +16,6 @@
 
 package com.android.messaging.adapter
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
@@ -68,29 +67,7 @@ class NotificationFacadeImpl(private val context: Context) : NotificationFacade 
     }
 
     override fun createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Create message notification channel
-            val messageChannel = NotificationChannel(
-                CHANNEL_ID_MESSAGES,
-                "Messages",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifications for incoming messages"
-                enableVibration(true)
-                enableLights(true)
-            }
-            notificationManager.createNotificationChannel(messageChannel)
-
-            // Create send failure notification channel
-            val errorChannel = NotificationChannel(
-                CHANNEL_ID_ERRORS,
-                "Send Failures",
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "Notifications for failed message sends"
-            }
-            notificationManager.createNotificationChannel(errorChannel)
-        }
+        BugleNotifications.createNotificationChannels()
     }
 
     override fun areNotificationsEnabled(): Boolean {
@@ -101,8 +78,4 @@ class NotificationFacadeImpl(private val context: Context) : NotificationFacade 
         }
     }
 
-    companion object {
-        const val CHANNEL_ID_MESSAGES = "messages"
-        const val CHANNEL_ID_ERRORS = "send_errors"
-    }
 }

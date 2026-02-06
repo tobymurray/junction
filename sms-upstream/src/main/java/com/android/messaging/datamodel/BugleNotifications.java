@@ -81,6 +81,10 @@ import com.android.messaging.util.RingtoneUtil;
 import com.android.messaging.util.ThreadUtil;
 import com.android.messaging.util.UriUtil;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -103,6 +107,10 @@ import java.util.Set;
 public class BugleNotifications {
     // Logging
     public static final String TAG = LogUtil.BUGLE_NOTIFICATIONS_TAG;
+
+    // Notification channel IDs (required for Android O+).
+    public static final String CHANNEL_ID_MESSAGES = "messages";
+    public static final String CHANNEL_ID_ERRORS = "send_errors";
 
     // Constants to use for update.
     public static final int UPDATE_NONE = 0;
@@ -392,6 +400,34 @@ public class BugleNotifications {
         return tag;
     }
 
+    /**
+     * Create notification channels required for Android O+.
+     * Safe to call multiple times; the system ignores re-creation of existing channels.
+     */
+    public static void createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            final Context context = Factory.get().getApplicationContext();
+            final NotificationManager nm =
+                    (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+            final NotificationChannel messageChannel = new NotificationChannel(
+                    CHANNEL_ID_MESSAGES,
+                    "Messages",
+                    NotificationManager.IMPORTANCE_HIGH);
+            messageChannel.setDescription("Notifications for incoming messages");
+            messageChannel.enableVibration(true);
+            messageChannel.enableLights(true);
+            nm.createNotificationChannel(messageChannel);
+
+            final NotificationChannel errorChannel = new NotificationChannel(
+                    CHANNEL_ID_ERRORS,
+                    "Send Failures",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            errorChannel.setDescription("Notifications for failed message sends");
+            nm.createNotificationChannel(errorChannel);
+        }
+    }
+
     private static void checkInitialized() {
         if (!sInitialized) {
             final Resources resources = Factory.get().getApplicationContext().getResources();
@@ -404,6 +440,7 @@ public class BugleNotifications {
             sIconWidth =
                     (int) resources.getDimension(android.R.dimen.notification_large_icon_width);
 
+            createNotificationChannels();
             sInitialized = true;
         }
     }
@@ -411,7 +448,8 @@ public class BugleNotifications {
     private static void processAndSend(final NotificationState state, final boolean silent,
             final boolean softSound) {
         final Context context = Factory.get().getApplicationContext();
-        final NotificationCompat.Builder notifBuilder = new NotificationCompat.Builder(context);
+        final NotificationCompat.Builder notifBuilder = new NotificationCompat.Builder(context,
+                CHANNEL_ID_MESSAGES);
         notifBuilder.setCategory(Notification.CATEGORY_MESSAGE);
         // TODO: Need to fix this for multi conversation notifications to rate limit dings.
         final String conversationId = state.mConversationIds.first();
@@ -818,7 +856,8 @@ public class BugleNotifications {
 
                 // Add a wearable page with no visible card so you can more easily see the photo.
                 final NotificationCompat.Builder photoPageNotifBuilder =
-                        new NotificationCompat.Builder(Factory.get().getApplicationContext());
+                        new NotificationCompat.Builder(Factory.get().getApplicationContext(),
+                                CHANNEL_ID_MESSAGES);
                 final WearableExtender photoPageWearableExtender = new WearableExtender();
                 photoPageWearableExtender.setHintShowBackgroundOnly(true);
                 if (attachmentBitmap != null) {
@@ -1202,7 +1241,8 @@ public class BugleNotifications {
         final PendingIntent destinationIntent = UIIntents.get()
                 .getPendingIntentForConversationActivity(context, conversationId, null /* draft */);
 
-        final NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+        final NotificationCompat.Builder builder = new NotificationCompat.Builder(context,
+                CHANNEL_ID_ERRORS);
         builder.setTicker(line1)
                 .setContentTitle(line1)
                 .setContentText(line2)

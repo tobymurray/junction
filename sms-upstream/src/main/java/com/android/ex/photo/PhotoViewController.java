@@ -1,5 +1,17 @@
 /*
- * STUB: com.android.ex.photo.PhotoViewController
+ * Copyright (C) 2012 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.android.ex.photo;
 
@@ -10,6 +22,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import androidx.fragment.app.FragmentManager;
 import androidx.loader.content.Loader;
+import androidx.viewpager.widget.ViewPager;
 
 import com.android.ex.photo.adapters.PhotoPagerAdapter;
 import com.android.ex.photo.loaders.PhotoBitmapLoaderInterface.BitmapResult;
@@ -25,8 +38,8 @@ public class PhotoViewController {
     protected ActivityInterface mActivity;
     protected String mActionBarTitle;
     protected String mActionBarSubtitle;
-    protected boolean mIsEmpty;
-    protected boolean mDisplayThumbsFullScreen;
+    public boolean mIsEmpty;
+    public boolean mDisplayThumbsFullScreen;
 
     public interface ActivityInterface {
         Context getContext();
@@ -54,10 +67,28 @@ public class PhotoViewController {
     }
 
     protected Cursor getCursorAtProperPosition() {
-        return null;
+        if (!(mActivity instanceof PhotoViewActivity)) {
+            return null;
+        }
+        final PhotoViewActivity activity = (PhotoViewActivity) mActivity;
+        final ViewPager pager = activity.mViewPager;
+        final PhotoPagerAdapter adapter = activity.mAdapter;
+        if (pager == null || adapter == null || adapter.getCursor() == null) {
+            return null;
+        }
+        final int position = pager.getCurrentItem();
+        final Cursor cursor = adapter.getCursor();
+        if (cursor.getCount() == 0 || position >= cursor.getCount()) {
+            return null;
+        }
+        cursor.moveToPosition(position);
+        return cursor;
     }
 
     protected PhotoPagerAdapter getAdapter() {
+        if (mActivity instanceof PhotoViewActivity) {
+            return ((PhotoViewActivity) mActivity).mAdapter;
+        }
         return null;
     }
 
