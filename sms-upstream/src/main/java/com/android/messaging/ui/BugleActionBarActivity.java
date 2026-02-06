@@ -26,6 +26,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 
+import android.util.TypedValue;
+
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
 import com.android.messaging.R;
 import com.android.messaging.util.BugleActivityUtil;
 import com.android.messaging.util.ImeUtil;
@@ -65,9 +71,48 @@ public class BugleActionBarActivity extends AppCompatActivity implements ImeUtil
             return;
         }
 
+        // Edge-to-edge fix: Activity 1.10+ calls enableEdgeToEdge() automatically,
+        // drawing the app behind system bars. On API 35 there is no opt-out.
+        // Pad the DecorView so everything sits inside the safe area.
+        ViewCompat.setOnApplyWindowInsetsListener(getWindow().getDecorView(),
+                (v, windowInsets) -> {
+                    Insets systemBars = windowInsets.getInsets(
+                            WindowInsetsCompat.Type.systemBars());
+                    v.setPadding(systemBars.left, systemBars.top,
+                            systemBars.right, systemBars.bottom);
+                    return WindowInsetsCompat.CONSUMED;
+                });
+
         mLastScreenHeight = getResources().getDisplayMetrics().heightPixels;
         if (LogUtil.isLoggable(LogUtil.BUGLE_TAG, LogUtil.VERBOSE)) {
             LogUtil.v(LogUtil.BUGLE_TAG, this.getLocalClassName() + ".onCreate");
+        }
+    }
+
+    @Override
+    protected void onPostCreate(final Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // The ActionBarOverlayLayout does not offset content below the ActionBar
+        // when it receives zero insets (consumed above). Manually pad the content
+        // view by the ActionBar height so content sits below it.
+        // Skip for activities using overlay ActionBar (e.g. ConversationActivity).
+        final TypedValue overlayVal = new TypedValue();
+        final boolean isOverlay = getTheme().resolveAttribute(
+                androidx.appcompat.R.attr.windowActionBarOverlay, overlayVal, true)
+                && overlayVal.data != 0;
+        if (!isOverlay) {
+            final View contentView = findViewById(android.R.id.content);
+            if (contentView != null) {
+                int actionBarHeight = 0;
+                final TypedValue tv = new TypedValue();
+                if (getTheme().resolveAttribute(
+                        androidx.appcompat.R.attr.actionBarSize, tv, true)) {
+                    actionBarHeight = TypedValue.complexToDimensionPixelSize(
+                            tv.data, getResources().getDisplayMetrics());
+                }
+                contentView.setPadding(contentView.getPaddingLeft(), actionBarHeight,
+                        contentView.getPaddingRight(), contentView.getPaddingBottom());
+            }
         }
     }
 

@@ -20,8 +20,6 @@
         PATCH-013: Changed to DayNight theme for dark mode support.
     -->
     <style name="BugleBaseTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
-        <!-- Fix edge-to-edge: don't draw under system bars by default -->
-        <item name="android:fitsSystemWindows">true</item>
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="27">shortEdges</item>
     </style>
 
