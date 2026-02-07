@@ -28,9 +28,14 @@ import androidx.appcompat.mms.CarrierConfigValuesLoader;
 import androidx.appcompat.mms.MmsManager;
 import android.telephony.CarrierConfigManager;
 
+import com.android.messaging.adapter.ContactResolverImpl;
+import com.android.messaging.adapter.MessageStoreImpl;
+import com.android.messaging.adapter.NotificationFacadeImpl;
+import com.android.messaging.adapter.SmsTransportImpl;
 import com.android.messaging.datamodel.BugleNotifications;
 import com.android.messaging.datamodel.DataModel;
 import com.android.messaging.receiver.SmsReceiver;
+import com.technicallyrural.junction.core.CoreSmsRegistry;
 import com.android.messaging.sms.ApnDatabase;
 import com.android.messaging.sms.BugleApnSettingsLoader;
 import com.android.messaging.sms.BugleUserAgentInfoLoader;
@@ -125,6 +130,15 @@ public class BugleApplication extends Application implements UncaughtExceptionHa
         if (OsUtil.isAtLeastM()) {
             registerCarrierConfigChangeReceiver(context);
         }
+
+        // Register core-sms adapter implementations
+        CoreSmsRegistry.INSTANCE.initialize(
+                new SmsTransportImpl(context),
+                new MessageStoreImpl(context),
+                new NotificationFacadeImpl(context),
+                new ContactResolverImpl(context),
+                null  // SmsReceiveListener registered separately by app module
+        );
 
         Trace.endSection();
     }

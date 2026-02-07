@@ -20,11 +20,11 @@ import android.telephony.SmsMessage
 import com.technicallyrural.junction.core.transport.ReceivedMms
 import com.technicallyrural.junction.core.transport.ReceivedMmsPart
 import com.technicallyrural.junction.core.transport.ReceivedSms
-import com.technicallyrural.junction.core.transport.SmsReceiverRegistry
+import com.technicallyrural.junction.core.CoreSmsRegistry
 
 /**
  * Dispatcher that bridges AOSP Messaging's broadcast receivers to the
- * [SmsReceiverRegistry] interface.
+ * [CoreSmsRegistry] listener.
  *
  * Call these methods from the AOSP broadcast receivers (SmsReceiver, MmsReceiver, etc.)
  * to notify registered listeners of incoming messages.
@@ -41,7 +41,7 @@ object SmsReceiverDispatcher {
      * @param subscriptionId The SIM subscription ID
      */
     fun dispatchSmsReceived(messages: Array<SmsMessage>, subscriptionId: Int) {
-        val listener = SmsReceiverRegistry.getListener() ?: return
+        val listener = CoreSmsRegistry.smsReceiveListener ?: return
 
         // Combine multipart messages into one
         val originatingAddress = messages.firstOrNull()?.originatingAddress ?: return
@@ -78,7 +78,7 @@ object SmsReceiverDispatcher {
         subscriptionId: Int,
         parts: List<ReceivedMmsPart>
     ) {
-        val listener = SmsReceiverRegistry.getListener() ?: return
+        val listener = CoreSmsRegistry.smsReceiveListener ?: return
 
         val receivedMms = ReceivedMms(
             from = from,
@@ -99,7 +99,7 @@ object SmsReceiverDispatcher {
      * @param subscriptionId The SIM subscription ID
      */
     fun dispatchWapPushReceived(pdu: ByteArray, subscriptionId: Int) {
-        val listener = SmsReceiverRegistry.getListener() ?: return
+        val listener = CoreSmsRegistry.smsReceiveListener ?: return
         listener.onWapPushReceived(pdu, subscriptionId)
     }
 
@@ -108,5 +108,5 @@ object SmsReceiverDispatcher {
      *
      * @return true if a listener is registered
      */
-    fun hasListener(): Boolean = SmsReceiverRegistry.getListener() != null
+    fun hasListener(): Boolean = CoreSmsRegistry.smsReceiveListener != null
 }

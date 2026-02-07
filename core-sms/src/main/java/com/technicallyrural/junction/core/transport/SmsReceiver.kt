@@ -84,22 +84,3 @@ data class ReceivedMmsPart(
     }
 }
 
-/**
- * Registry for SMS receive listeners.
- *
- * The upstream module calls this to dispatch received messages.
- * The app module registers its listener here.
- */
-object SmsReceiverRegistry {
-    private var listener: SmsReceiveListener? = null
-
-    fun registerListener(listener: SmsReceiveListener) {
-        this.listener = listener
-    }
-
-    fun unregisterListener() {
-        this.listener = null
-    }
-
-    fun getListener(): SmsReceiveListener? = listener
-}
