@@ -144,7 +144,8 @@ All permissions are public SDK permissions:
 - [x] SMS send/receive working
 - [ ] MMS send/receive verified
 - [x] Core-sms interface implementations created (5 adapters in sms-upstream/adapter/)
-- [ ] Core-sms adapters wired via dependency injection
+- [x] Core-sms adapters wired via dependency injection (`CoreSmsRegistry`)
+- [x] App module decoupled from sms-upstream (no direct `com.android.messaging.*` imports)
 - [ ] Unit test coverage
 - [ ] Integration test coverage
 - [ ] GrapheneOS compatibility verified
@@ -195,7 +196,7 @@ Based on codebase inspection (2026-02-03):
   - Completion: Unit test demonstrates notification creation via interface
 - [ ] **Implement `SmsReceiver` adapter** (Scope: core-sms, sms-upstream)
   - Completion: Unit test demonstrates receive callback via interface
-- [ ] **Wire app module to use core-sms interfaces** (Scope: app)
+- [x] **Wire app module to use core-sms interfaces** (Scope: app)
   - Completion: App module has zero direct imports from `com.android.messaging.*`
 
 #### Phase 2: MMS Verification
@@ -249,8 +250,8 @@ Each step is independently completable and ends with a verifiable outcome.
 | ~~3~~ | ~~Create `ContactResolverImpl` adapter class~~ | ~~`sms-upstream/src/main/java/.../adapter/ContactResolverImpl.kt`~~ | ✅ Complete (2026-02-05) | None |
 | ~~4~~ | ~~Create `NotificationFacadeImpl` adapter class~~ | ~~`sms-upstream/src/main/java/.../adapter/NotificationFacadeImpl.kt`~~ | ✅ Complete (2026-02-05) | None |
 | ~~5~~ | ~~Create `SmsReceiverDispatcher` adapter class~~ | ~~`sms-upstream/src/main/java/.../adapter/SmsReceiverDispatcher.kt`~~ | ✅ Complete (2026-02-05) | None |
-| 6 | Add dependency injection setup | `app/build.gradle.kts`, `app/src/main/java/.../di/` | Interfaces can be injected into app components | Steps 1-5 |
-| 7 | Refactor app module to use interfaces | `app/src/main/java/` (receivers, services) | No direct `com.android.messaging.*` imports in app module | Step 6 |
+| ~~6~~ | ~~Add dependency injection setup~~ | ~~`core-sms/CoreSmsRegistry.kt`, `BugleApplication`~~ | ✅ Complete (2026-02-07) | Steps 1-5 |
+| ~~7~~ | ~~Refactor app module to use interfaces~~ | ~~`app/AndroidManifest.xml`, `sms-upstream/AndroidManifest.xml`, `MainActivity.kt`~~ | ✅ Complete (2026-02-07) | Step 6 |
 | 8 | Add unit test infrastructure | `core-sms/build.gradle.kts`, `core-sms/src/test/` | `./gradlew :core-sms:test` runs | None |
 | 9 | Write interface contract tests | `core-sms/src/test/java/.../` | Tests define expected behavior | Step 8 |
 | 10 | Write adapter implementation tests | `sms-upstream/src/test/java/.../` | Adapter tests pass | Steps 1-5, 8 |
