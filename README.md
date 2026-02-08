@@ -146,7 +146,7 @@ All permissions are public SDK permissions:
 - [x] Core-sms interface implementations created (5 adapters in sms-upstream/adapter/)
 - [x] Core-sms adapters wired via dependency injection (`CoreSmsRegistry`)
 - [x] App module decoupled from sms-upstream (no direct `com.android.messaging.*` imports)
-- [ ] Unit test coverage
+- [x] Unit test coverage (110 tests: CoreSmsRegistry + 5 interface contract tests)
 - [ ] Integration test coverage
 - [ ] GrapheneOS compatibility verified
 - [ ] Matrix bridge foundation
@@ -252,8 +252,8 @@ Each step is independently completable and ends with a verifiable outcome.
 | ~~5~~ | ~~Create `SmsReceiverDispatcher` adapter class~~ | ~~`sms-upstream/src/main/java/.../adapter/SmsReceiverDispatcher.kt`~~ | ✅ Complete (2026-02-05) | None |
 | ~~6~~ | ~~Add dependency injection setup~~ | ~~`core-sms/CoreSmsRegistry.kt`, `BugleApplication`~~ | ✅ Complete (2026-02-07) | Steps 1-5 |
 | ~~7~~ | ~~Refactor app module to use interfaces~~ | ~~`app/AndroidManifest.xml`, `sms-upstream/AndroidManifest.xml`, `MainActivity.kt`~~ | ✅ Complete (2026-02-07) | Step 6 |
-| 8 | Add unit test infrastructure | `core-sms/build.gradle.kts`, `core-sms/src/test/` | `./gradlew :core-sms:test` runs | None |
-| 9 | Write interface contract tests | `core-sms/src/test/java/.../` | Tests define expected behavior | Step 8 |
+| ~~8~~ | ~~Add unit test infrastructure~~ | ~~`core-sms/build.gradle.kts`, `core-sms/src/test/`~~ | ✅ Complete (2026-02-08) | None |
+| ~~9~~ | ~~Write interface contract tests~~ | ~~`core-sms/src/test/java/.../`~~ | ✅ Complete (2026-02-08) | Step 8 |
 | 10 | Write adapter implementation tests | `sms-upstream/src/test/java/.../` | Adapter tests pass | Steps 1-5, 8 |
 | 11 | Manual MMS testing | N/A | Document results in `docs/TESTING.md` | None |
 | 12 | GrapheneOS device testing | N/A | Document results in `docs/TESTING.md` | None |
