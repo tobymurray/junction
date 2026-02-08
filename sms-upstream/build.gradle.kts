@@ -97,6 +97,13 @@ dependencies {
     // Core-SMS interfaces (adapter layer)
     implementation(project(":core-sms"))
 
+    // Testing
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.test.core)
+
     // NOTE: The following AOSP-internal libraries are NOT available as public dependencies:
     // - androidx.appcompat.mms.* (MMS PDU handling)
     // - com.android.ex.chips.* (contact chips)

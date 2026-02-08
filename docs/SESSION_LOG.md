@@ -404,6 +404,111 @@ This establishes the testing foundation for Step 9 (interface contract tests) an
 
 These contract tests establish the specification that adapter implementations must satisfy. They can be used as acceptance criteria when implementing or refactoring adapters.
 
+---
+
+## Session 9 - 2026-02-08 (Testing Strategy & Adapter Tests)
+
+### Purpose
+Implement Step 10: Write adapter implementation tests (with hybrid testing strategy).
+
+### Testing Strategy Adopted
+After evaluating options, adopted **Option C: Hybrid Approach** with pragmatic adaptations:
+
+1. **JVM Unit Tests** - Contract tests (already complete: 110 tests)
+2. **Robolectric Tests** - Lightweight adapter tests (instantiation, interface compliance)
+3. **Instrumented Tests** - Critical paths only (deferred to future)
+
+### Rationale for Lightweight Approach
+AOSP Messaging's heavy use of Factory singleton pattern creates testing challenges:
+- Deep dependency chains (Adapters → Factory → DataModel → DatabaseHelper → Resources)
+- Singleton state requires full app initialization
+- Cannot inject mocks without refactoring AOSP code (violates architecture)
+
+**Considered approaches:**
+- ❌ Deep mocking: 100s of mocks, brittle, over-engineering
+- ❌ Refactor adapters for DI: Violates architectural constraints
+- ❌ Full AOSP initialization: Complex, slow, fragile
+- ✅ **Lightweight + instrumented**: Pragmatic, fast, good coverage
+
+**Adopted strategy:**
+- Contract tests (110) define expected behavior
+- Lightweight adapter tests (4) verify creation & compliance
+- Manual testing validates real behavior
+- Future instrumented tests for critical paths
+
+### Completed
+- [x] Created `TESTING_STRATEGY.md` - Comprehensive testing documentation
+  - Defined boundaries: JVM unit vs Robolectric vs Instrumented
+  - Decision tree for test type selection
+  - Component-by-component testing plan
+  - Pragmatic approach justification
+
+- [x] Added Robolectric infrastructure
+  - Added Robolectric 4.14 to version catalog
+  - Configured sms-upstream/build.gradle.kts with test dependencies
+  - Created robolectric.properties (SDK 33, no BugleApplication)
+  - Created test directory structure
+
+- [x] Created `SmsTransportImplTest.kt` (4 tests)
+  - Adapter instantiation with Context
+  - Interface compliance verification
+  - Constant accessibility (DEFAULT_SUBSCRIPTION)
+  - Method existence validation
+
+### Technical Decisions
+
+**Why not use BugleApplication in tests?**
+- BugleApplication.onCreate() initializes full AOSP stack
+- Requires string resources, database, Factory setup
+- Creates cascading initialization failures in test environment
+- Solution: Use plain Android Application, test adapters in isolation
+
+**Why only 4 tests for SmsTransportImpl?**
+- Deeper testing requires AOSP Factory initialization
+- Over-mocking would create brittle, maintenance-heavy tests
+- Contract tests (38 for SmsTransport) already validate expected behavior
+- Instrumented tests will validate real SMS behavior
+
+### Test Coverage
+- **JVM Unit Tests:** 110 (core-sms contract tests)
+- **Robolectric Tests:** 4 (sms-upstream adapter tests)
+- **Instrumented Tests:** 0 (deferred)
+- **Total:** 114 tests, all passing
+
+### Verification
+- `./gradlew test` - PASSED (114/114 tests)
+- `./gradlew :sms-upstream:testDebugUnitTest` - PASSED (4/4 tests)
+- All existing tests still pass (no regressions)
+
+### Documentation Updates
+- Created `docs/TESTING_STRATEGY.md` (comprehensive guide)
+- Updated strategy with pragmatic approach section
+- Documented architectural constraints and tradeoffs
+
+### Next Step
+
+**Step 10: Remaining adapter tests (lightweight Robolectric)**
+
+**Goal:** Create lightweight tests for remaining 4 adapters
+
+**Files to create:**
+- `MessageStoreImplTest.kt` - Instantiation & interface compliance
+- `ContactResolverImplTest.kt` - Instantiation & interface compliance
+- `NotificationFacadeImplTest.kt` - Instantiation & interface compliance
+- `SmsReceiverDispatcherTest.kt` - Instantiation & method existence
+
+**Completion Criteria:**
+- ~4 tests per adapter (similar to SmsTransportImplTest)
+- All tests pass
+- Total test count: ~130 tests (110 contract + 20 adapter)
+
+**Optional future work (out of scope for now):**
+- Instrumented tests for critical SMS paths
+- App module tests (when app grows beyond trampoline)
+- Performance/stress tests
+
+---
+
 ### Next Step
 
 Per README Execution Plan, **Step 10: Write adapter implementation tests**.
