@@ -146,7 +146,7 @@ All permissions are public SDK permissions:
 - [x] Core-sms interface implementations created (5 adapters in sms-upstream/adapter/)
 - [x] Core-sms adapters wired via dependency injection (`CoreSmsRegistry`)
 - [x] App module decoupled from sms-upstream (no direct `com.android.messaging.*` imports)
-- [x] Unit test coverage (110 tests: CoreSmsRegistry + 5 interface contract tests)
+- [x] Unit test coverage (132 tests: contract tests + adapter tests)
 - [ ] Integration test coverage
 - [ ] GrapheneOS compatibility verified
 - [ ] Matrix bridge foundation
@@ -254,7 +254,7 @@ Each step is independently completable and ends with a verifiable outcome.
 | ~~7~~ | ~~Refactor app module to use interfaces~~ | ~~`app/AndroidManifest.xml`, `sms-upstream/AndroidManifest.xml`, `MainActivity.kt`~~ | ✅ Complete (2026-02-07) | Step 6 |
 | ~~8~~ | ~~Add unit test infrastructure~~ | ~~`core-sms/build.gradle.kts`, `core-sms/src/test/`~~ | ✅ Complete (2026-02-08) | None |
 | ~~9~~ | ~~Write interface contract tests~~ | ~~`core-sms/src/test/java/.../`~~ | ✅ Complete (2026-02-08) | Step 8 |
-| 10 | Write adapter implementation tests | `sms-upstream/src/test/java/.../` | Adapter tests pass | Steps 1-5, 8 |
+| ~~10~~ | ~~Write adapter implementation tests~~ | ~~`sms-upstream/src/test/java/.../`~~ | ✅ Complete (2026-02-08) | Steps 1-5, 8 |
 | 11 | Manual MMS testing | N/A | Document results in `docs/TESTING.md` | None |
 | 12 | GrapheneOS device testing | N/A | Document results in `docs/TESTING.md` | None |
 | 13 | Replace rastermill stub with Glide | `sms-upstream/build.gradle.kts`, delete stub files | Animated GIFs display correctly | None |

@@ -485,27 +485,51 @@ AOSP Messaging's heavy use of Factory singleton pattern creates testing challeng
 - Updated strategy with pragmatic approach section
 - Documented architectural constraints and tradeoffs
 
+### Step 10 Completed: All Adapter Tests
+
+**Implementation:**
+- [x] Created `MessageStoreImplTest.kt` (4 tests)
+  - Instantiation, interface compliance, method existence, pattern consistency
+
+- [x] Created `ContactResolverImplTest.kt` (4 tests)
+  - Instantiation, interface compliance, method existence, pattern consistency
+
+- [x] Created `NotificationFacadeImplTest.kt` (4 tests)
+  - Instantiation, interface compliance, method existence, pattern consistency
+
+- [x] Created `SmsReceiverDispatcherTest.kt` (6 tests)
+  - Object accessibility, method existence (5 methods), singleton pattern
+
+**Test Coverage:**
+- **JVM Unit Tests:** 110 (core-sms contract tests)
+- **Robolectric Tests:** 22 (sms-upstream adapter tests, 5 classes)
+- **Total:** 132 tests, all passing ✅
+
+**Verification:**
+- `./gradlew test` - PASSED (132/132 tests)
+- All adapters now have baseline test coverage
+- Complete consistency across adapter implementations
+
+**Value Delivered:**
+- ✅ Regression detection for all adapters
+- ✅ Consistent test coverage (no gaps)
+- ✅ CI/CD baseline (every commit verifies adapters)
+- ✅ Refactoring confidence (safe to modify adapter creation)
+- ✅ Documentation (tests specify adapter API surface)
+
+---
+
 ### Next Step
 
-**Step 10: Remaining adapter tests (lightweight Robolectric)**
+Per README Execution Plan, **Step 11: Manual MMS testing** is next, but that's
+manual work on a real device and may not be the highest priority right now.
 
-**Goal:** Create lightweight tests for remaining 4 adapters
-
-**Files to create:**
-- `MessageStoreImplTest.kt` - Instantiation & interface compliance
-- `ContactResolverImplTest.kt` - Instantiation & interface compliance
-- `NotificationFacadeImplTest.kt` - Instantiation & interface compliance
-- `SmsReceiverDispatcherTest.kt` - Instantiation & method existence
-
-**Completion Criteria:**
-- ~4 tests per adapter (similar to SmsTransportImplTest)
-- All tests pass
-- Total test count: ~130 tests (110 contract + 20 adapter)
-
-**Optional future work (out of scope for now):**
-- Instrumented tests for critical SMS paths
-- App module tests (when app grows beyond trampoline)
-- Performance/stress tests
+**Alternative priorities (user's choice):**
+1. Update README execution plan to mark Step 10 complete
+2. Add minimal instrumented tests (if device available)
+3. Move to Step 13-14 (replace stub libraries)
+4. Focus on app features or Matrix bridge
+5. GrapheneOS testing (Step 12)
 
 ---
 
