@@ -24,6 +24,7 @@
     <string name="share_intent_activity_label">Select conversation</string>
 
     <string name="action_settings">Settings</string>
+    <string name="action_matrix_config">Matrix Configuration</string>
     <string name="sendButtonContentDescription">Send Message</string>
     <string name="attachMediaButtonContentDescription">Add an attachment</string>
     <string name="help_and_feedback_activity_label">Help</string>

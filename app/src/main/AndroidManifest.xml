@@ -117,6 +117,20 @@
             </intent-filter>
         </activity>
 
+        <!-- ================================================================
+             MATRIX CONFIGURATION ACTIVITY (app module)
+             ================================================================ -->
+
+        <activity
+            android:name=".ui.MatrixConfigActivity"
+            android:exported="false"
+            android:label="Matrix Configuration"
+            android:parentActivityName=".ui.MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.MainActivity" />
+        </activity>
+
         <!-- All sms-upstream components (activities, receivers, services,
              providers) are declared in sms-upstream/src/main/AndroidManifest.xml
              and merged automatically by the Android Gradle Plugin. -->

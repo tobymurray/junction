@@ -17,7 +17,7 @@
         <!-- Conversation List (main screen) -->
         <activity
             android:name="com.android.messaging.ui.conversationlist.ConversationListActivity"
-            android:exported="false"
+            android:exported="true"
             android:configChanges="orientation|screenSize|keyboardHidden|uiMode"
             android:theme="@style/BugleTheme.ConversationListActivity">
             <intent-filter>

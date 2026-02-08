@@ -37,6 +37,12 @@
         appcompat:showAsAction="never"/>
 
     <item
+        android:id="@+id/action_matrix_config"
+        android:orderInCategory="350"
+        android:title="@string/action_matrix_config"
+        appcompat:showAsAction="never"/>
+
+    <item
         android:id="@+id/action_settings"
         android:orderInCategory="400"
         android:title="@string/action_settings"

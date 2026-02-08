@@ -120,6 +120,9 @@ public class ConversationListActivity extends AbstractConversationListActivity {
         } else if (id == R.id.action_show_blocked_contacts) {
             onActionBarBlockedParticipants();
             return true;
+        } else if (id == R.id.action_matrix_config) {
+            onActionBarMatrixConfig();
+            return true;
         }
         return super.onOptionsItemSelected(menuItem);
     }
@@ -143,6 +146,13 @@ public class ConversationListActivity extends AbstractConversationListActivity {
 
     public void onActionBarArchived() {
         UIIntents.get().launchArchivedConversationsActivity(this);
+    }
+
+    public void onActionBarMatrixConfig() {
+        // Launch Matrix configuration activity from app module
+        final Intent intent = new Intent();
+        intent.setClassName(getPackageName(), "com.technicallyrural.junction.app.ui.MatrixConfigActivity");
+        startActivity(intent);
     }
 
     @Override

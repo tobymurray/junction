@@ -19,7 +19,7 @@
 
 plugins {
     alias(libs.plugins.android.application)
-    // Note: Kotlin plugin not needed - AGP 9.0+ has built-in Kotlin support
+    // AGP 9.0 provides built-in Kotlin support
 }
 
 android {
@@ -79,6 +79,7 @@ dependencies {
     // AndroidX
     // ========================================================================
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.fragment)
