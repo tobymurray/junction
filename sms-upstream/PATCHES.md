@@ -47,18 +47,18 @@ When updating upstream, apply patches in this order:
 
 ### PATCH-003: Stub Library - com.android.ex.chips
 
-**Status:** ✅ Complete
+**Status:** ✅ Complete → ⚠️ REPLACED by PATCH-015 (2026-02-08)
 **Rationale:** AOSP chips library not available as public dependency
-**Files Added:**
-- `com/android/ex/chips/RecipientEntry.java`
-- `com/android/ex/chips/RecipientEditTextView.java`
-- `com/android/ex/chips/BaseRecipientAdapter.java`
-- `com/android/ex/chips/RecipientAlternatesAdapter.java`
-- `com/android/ex/chips/PhotoManager.java`
-- `com/android/ex/chips/DropdownChipLayouter.java`
-- `com/android/ex/chips/recipientchip/DrawableRecipientChip.java`
+**Files Added (ORIGINAL STUBS - NOW REPLACED):**
+- `com/android/ex/chips/RecipientEntry.java` (stub)
+- `com/android/ex/chips/RecipientEditTextView.java` (stub)
+- `com/android/ex/chips/BaseRecipientAdapter.java` (stub)
+- `com/android/ex/chips/RecipientAlternatesAdapter.java` (stub)
+- `com/android/ex/chips/PhotoManager.java` (stub)
+- `com/android/ex/chips/DropdownChipLayouter.java` (stub)
+- `com/android/ex/chips/recipientchip/DrawableRecipientChip.java` (stub)
 
-**Future Work:** Replace with Material Chips or copy full AOSP chips library.
+**Note:** These stubs have been replaced with the full AOSP chips library. See PATCH-015.
 
 ### PATCH-004: Stub Library - com.android.ex.photo
 
@@ -232,6 +232,90 @@ private void promptForDefaultSmsAppIfNeeded() {
     }
 }
 ```
+
+### PATCH-015: Full AOSP Chips Library Vendoring
+
+**Status:** ✅ Complete
+**Date:** 2026-02-08
+**Rationale:** Replace stub chips library with full AOSP implementation for proper chip functionality
+**Source:** https://github.com/klinker41/android-chips (based on Google's internal AOSP chips library)
+
+**Files Replaced (17 Java files):**
+- `com/android/ex/chips/AccountSpecifier.java`
+- `com/android/ex/chips/BaseRecipientAdapter.java`
+- `com/android/ex/chips/ChipsUtil.java`
+- `com/android/ex/chips/ColorUtils.java`
+- `com/android/ex/chips/ContactImageCreator.java`
+- `com/android/ex/chips/DensityConverter.java`
+- `com/android/ex/chips/DropdownChipLayouter.java`
+- `com/android/ex/chips/PhotoManager.java` (interface, not stub)
+- `com/android/ex/chips/Queries.java`
+- `com/android/ex/chips/RecipientAlternatesAdapter.java`
+- `com/android/ex/chips/RecipientEditTextView.java`
+- `com/android/ex/chips/RecipientEntry.java`
+- `com/android/ex/chips/SingleRecipientArrayAdapter.java`
+- `com/android/ex/chips/recipientchip/BaseRecipientChip.java`
+- `com/android/ex/chips/recipientchip/DrawableRecipientChip.java`
+- `com/android/ex/chips/recipientchip/InvisibleRecipientChip.java`
+- `com/android/ex/chips/recipientchip/SimpleRecipientChip.java`
+- `com/android/ex/chips/recipientchip/VisibleRecipientChip.java`
+
+**Resources Added:**
+- Layouts: `chips_alternate_item.xml`, `chips_recipient_dropdown_item.xml`, `copy_chip_dialog_layout.xml`, `more_item.xml`
+- Drawables: Chip backgrounds, delete icons, contact pictures (hdpi, xhdpi, xxhdpi)
+- Dimensions: Chip sizing values (`chip_height`, `chip_padding`, etc.)
+- Strings: Chip interaction strings (`more_string`, `copy_email`, `copy_number`, `done`)
+- Styles: `RecipientEditTextView`, `ChipTitleStyle`, `ChipSubtitleStyle`, `ChipIconStyle`
+- Colors: Material Design color palette (80+ colors for chip backgrounds)
+
+**Build Compatibility Changes:**
+
+1. **R imports** - Added `import com.android.messaging.R;` to:
+   - `ColorUtils.java`
+   - `ContactImageCreator.java`
+   - `DropdownChipLayouter.java`
+   - `RecipientEditTextView.java`
+
+2. **AndroidX migration** - Changed `android.support.annotation.*` → `androidx.annotation.*`:
+   - `ColorUtils.java`: `@ColorInt`, `@ColorRes`
+   - `RecipientEditTextView.java`: `@IdRes`
+
+3. **Visibility changes** (for Messaging app integration):
+   - `BaseRecipientAdapter`:
+     - `clearTempEntries()`: `private` → `protected`
+     - `updateEntries()`: `private` → `protected`
+     - `mCurrentConstraint`: `private` → `protected`
+     - Added `mPhotoManager` field and `setPhotoManager()` method
+   - `DropdownChipLayouter`:
+     - Added `getStyledResults()` helper method for contact name styling
+   - `RecipientAlternatesAdapter`:
+     - `MAX_LOOKUPS`: package-private → `public`
+   - `RecipientEntry`:
+     - `INVALID_DESTINATION_TYPE`: package-private → `public`
+     - Constructor: `private` → `protected` (for BugleRecipientEntry subclass)
+   - `RecipientEditTextView`:
+     - `setDropdownChipLayouter()`: `protected` → `public`
+     - Added `appendRecipientEntry()` compatibility method
+     - Added `removeRecipientEntry()` compatibility method
+
+4. **Custom attributes** - Added Messaging-specific attributes to `RecipientEditTextView` styleable:
+   - `unselectedChipTextColor`
+   - `unselectedChipBackgroundColor`
+
+**Integration Points:**
+- `ContactRecipientAutoCompleteView` extends `RecipientEditTextView`
+- `ContactRecipientAdapter` extends `BaseRecipientAdapter`
+- `ContactDropdownLayouter` extends `DropdownChipLayouter`
+- `ContactRecipientPhotoManager` implements `PhotoManager`
+- `BugleRecipientEntry` extends `RecipientEntry`
+
+**Update Instructions:**
+See `sms-upstream/src/main/java/com/android/ex/chips/README.md` for detailed update process.
+
+**Documentation:**
+- Complete implementation details in `sms-upstream/src/main/java/com/android/ex/chips/README.md`
+- All modifications documented for future updates
+- Upstream source URL and date recorded
 
 ---
 

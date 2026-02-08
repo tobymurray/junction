@@ -1,17 +1,37 @@
 /*
- * STUB: com.android.ex.chips.PhotoManager
+ * Copyright (C) 2011 The Android Open Source Project
  *
- * This is a stub interface to allow compilation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.android.ex.chips;
 
+/**
+ * Interface for photo management integration with RecipientEditTextView.
+ * Application code should implement this interface to provide photo loading.
+ */
 public interface PhotoManager {
 
+    /**
+     * Callback for photo loading operations.
+     */
     interface PhotoManagerCallback {
         void onPhotoBytesPopulated();
         void onPhotoBytesAsyncLoadFailed();
         void onPhotoBytesAsynchronouslyPopulated();
     }
 
+    /**
+     * Load photo bytes for a recipient entry asynchronously.
+     */
     void populatePhotoBytesAsync(RecipientEntry entry, PhotoManagerCallback callback);
 }

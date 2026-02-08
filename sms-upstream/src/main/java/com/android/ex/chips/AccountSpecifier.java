@@ -14,23 +14,15 @@
  * limitations under the License.
  */
 
-package com.android.ex.chips.recipientchip;
+package com.android.ex.chips;
 
-import android.graphics.Canvas;
-import android.graphics.Rect;
+import android.accounts.Account;
 
 /**
- * RecipientChip defines a drawable object that contains information relevant to a
- * particular recipient.
+ * The AccountSpecificAdapter interface describes an Adapter
+ * that can take an account to retrieve information tied to
+ * a specific account.
  */
-public interface DrawableRecipientChip extends BaseRecipientChip {
-    /**
-     * Get the bounds of the chip; may be 0,0 if it is not visibly rendered.
-     */
-    Rect getBounds();
-
-    /**
-     * Draw the chip.
-     */
-    void draw(Canvas canvas);
+public interface AccountSpecifier {
+    public void setAccount(Account account);
 }

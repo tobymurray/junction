@@ -59,22 +59,26 @@
     </declare-styleable>
     <attr name="apnPreferenceStyle" format="reference" />
 
-    <!-- Attributes for RecipientEditTextView from chips library stub -->
+    <!-- Attributes for RecipientEditTextView from AOSP chips library -->
     <declare-styleable name="RecipientEditTextView">
+        <attr name="avatarPosition">
+            <enum name="end" value="0" />
+            <enum name="start" value="1" />
+        </attr>
+        <attr name="chipBackground" format="reference" />
+        <attr name="chipBackgroundPressed" format="reference" />
+        <attr name="chipDelete" format="reference" />
+        <attr name="chipFontSize" format="reference" />
+        <attr name="chipHeight" format="reference" />
+        <attr name="chipPadding" format="reference" />
+        <attr name="disableDelete" format="boolean" />
+        <attr name="invalidChipBackground" format="reference" />
+        <attr name="imageSpanAlignment">
+            <enum name="bottom" value = "0"/>
+            <enum name="baseline" value = "1"/>
+        </attr>
+        <!-- Messaging app custom attributes -->
         <attr name="unselectedChipTextColor" format="color" />
         <attr name="unselectedChipBackgroundColor" format="color" />
-        <attr name="avatarPosition" format="enum">
-            <enum name="start" value="0" />
-            <enum name="end" value="1" />
-        </attr>
-        <attr name="chipHeight" format="dimension" />
-        <attr name="imageSpanAlignment" format="enum">
-            <enum name="baseline" value="0" />
-            <enum name="bottom" value="1" />
-        </attr>
-        <attr name="chipPadding" format="dimension" />
-        <attr name="chipBackground" format="reference|color" />
-        <attr name="chipTextSize" format="dimension" />
-        <attr name="chipDeleteIcon" format="reference" />
     </declare-styleable>
 </resources>

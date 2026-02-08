@@ -56,7 +56,6 @@ public class BugleRecipientEntry extends RecipientEntry {
                 ? Uri.parse(thumbnailUriAsString) : null), false, isValid, lookupKey);
     }
 
-    @Override
     public boolean isSamePerson(final RecipientEntry entry) {
         return getDestination() != null && entry.getDestination() != null &&
                 TextUtils.equals(getDestination(), entry.getDestination());

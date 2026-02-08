@@ -182,9 +182,16 @@ and are blocked on newer Android versions.
 ### In `sms-upstream/`
 
 - AOSP Messaging source code (vendored)
+- Vendored AOSP libraries (chips, photo viewer, vCard parser, etc.)
 - Implementations of core-sms interfaces
 - Minimal patches to remove hidden API usage
 - NOTHING app-specific
+
+**Vendored Libraries:**
+- `com.android.ex.chips.*` - Contact chip UI components (from klinker41/android-chips)
+- `com.android.ex.photo.*` - Photo viewer (implementation based on AOSP)
+- `com.android.vcard.*` - vCard parsing (stubs, to be replaced)
+- `android.support.rastermill.*` - Frame sequence animation (stubs, to be replaced)
 
 ## Forbidden Patterns
 

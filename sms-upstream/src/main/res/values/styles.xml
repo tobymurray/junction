@@ -174,7 +174,22 @@
         <item name="android:background">?android:attr/selectableItemBackground</item>
     </style>
 
-    <style name="RecipientEditTextView">
+    <!-- AOSP chips library RecipientEditTextView style merged with Messaging customizations -->
+    <style name="RecipientEditTextView" parent="@android:style/Widget.AutoCompleteTextView">
+        <!-- AOSP chips library properties -->
+        <item name="android:inputType">textEmailAddress|textMultiLine</item>
+        <item name="android:imeOptions">actionNext|flagNoFullscreen</item>
+        <item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
+        <item name="android:background">@null</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:dropDownVerticalOffset">-6dip</item>
+        <item name="android:dropDownHorizontalOffset">-16dip</item>
+        <item name="android:minHeight">48dip</item>
+        <item name="android:lineSpacingExtra">@dimen/line_spacing_extra</item>
+        <item name="android:textAlignment">viewStart</item>
+        <item name="android:textDirection">locale</item>
+        <!-- Messaging app customizations -->
         <item name="android:textSize">@dimen/recipient_edit_text_size</item>
         <item name="android:textColor">@color/compose_contact_text</item>
         <item name="android:textColorHint">@color/compose_contact_faint_text</item>
@@ -442,6 +457,15 @@
 
     <style name="ChipIconStyle">
         <item name="android:layout_marginRight">12dp</item>
+    </style>
+
+    <!-- AOSP chips library additional styles -->
+    <style name="ChipTitleStyle">
+        <item name="android:paddingLeft">@dimen/chip_title_padding_start</item>
+    </style>
+
+    <style name="ChipSubtitleStyle">
+        <item name="android:paddingLeft">@dimen/chip_subtitle_padding_start</item>
     </style>
 
     <style name="SimSelectorItem">

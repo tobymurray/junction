@@ -259,9 +259,65 @@ git branch -D update-upstream-android-XX  # If not merged
 
 ---
 
+## Updating Vendored Libraries
+
+In addition to the main AOSP Messaging source, the project vendors several AOSP libraries that aren't available as public dependencies.
+
+### Chips Library (com.android.ex.chips)
+
+**Current Source:** https://github.com/klinker41/android-chips
+**Location:** `sms-upstream/src/main/java/com/android/ex/chips/`
+**Documentation:** `sms-upstream/src/main/java/com/android/ex/chips/README.md`
+
+The chips library provides RecipientEditTextView for contact chip UI components.
+
+**Update Process:**
+
+1. Clone the latest version:
+   ```bash
+   git clone https://github.com/klinker41/android-chips /tmp/android-chips
+   cd /tmp/android-chips
+   # Record the commit hash
+   git log -1 --format="%H"
+   ```
+
+2. Replace the chips source:
+   ```bash
+   cd /home/toby/AndroidStudioProjects/AospMessaging
+   rm -rf sms-upstream/src/main/java/com/android/ex/chips
+   cp -r /tmp/android-chips/library/src/main/java/com/android/ex/chips \
+       sms-upstream/src/main/java/com/android/ex/
+   ```
+
+3. Re-apply build compatibility changes (documented in chips/README.md):
+   - Add `import com.android.messaging.R;` to files referencing R
+   - Change `android.support.annotation.*` to `androidx.annotation.*`
+   - Adjust visibility modifiers (private → protected where needed)
+   - Add compatibility methods (`appendRecipientEntry`, `removeRecipientEntry`)
+   - Add custom attributes to attrs.xml
+
+4. Update resources:
+   - Copy new drawables, layouts, values from `/tmp/android-chips/library/src/main/res/`
+   - Preserve Messaging-specific customizations (e.g., `chips_alternates_dropdown_item.xml`)
+
+5. Build and test:
+   ```bash
+   ./gradlew :sms-upstream:compileDebugJava
+   ./gradlew :app:assembleDebug
+   ```
+
+6. Update documentation:
+   - Update commit hash and date in `chips/README.md`
+   - Document any new modifications required
+
+**Note:** The chips library changes infrequently. Only update if there are security fixes or needed features.
+
+---
+
 ## Version History
 
 | Date | Version | Notes |
 |------|---------|-------|
-| YYYY-MM-DD | android-XX.X.X_rYY | Initial vendoring |
+| 2026-02-01 | android-main (de315b7) | Initial vendoring |
+| 2026-02-08 | Chips library vendored | Replaced stubs with full AOSP chips library |
 

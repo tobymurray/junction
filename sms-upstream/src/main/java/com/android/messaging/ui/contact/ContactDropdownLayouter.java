@@ -69,8 +69,7 @@ public class ContactDropdownLayouter extends DropdownChipLayouter {
      */
     @Override
     public View bindView(final View convertView, final ViewGroup parent, final RecipientEntry entry,
-            final int position, AdapterType type, final String substring,
-            final StateListDrawable deleteDrawable) {
+            final int position, AdapterType type, final String substring) {
         if (type != AdapterType.BASE_RECIPIENT) {
             if (type == AdapterType.SINGLE_RECIPIENT) {
                 // Treat single recipients the same way as alternates. The base implementation of
@@ -78,8 +77,7 @@ public class ContactDropdownLayouter extends DropdownChipLayouter {
                 // like to always show the full destination address per design request.
                 type = AdapterType.RECIPIENT_ALTERNATES;
             }
-            return super.bindView(convertView, parent, entry, position, type, substring,
-                    deleteDrawable);
+            return super.bindView(convertView, parent, entry, position, type, substring);
         }
 
         // Default to show all the information
@@ -122,19 +120,14 @@ public class ContactDropdownLayouter extends DropdownChipLayouter {
     }
 
     @Override
-    protected int getItemLayoutResId(AdapterType type) {
-        switch (type) {
-            case BASE_RECIPIENT:
-                return R.layout.contact_list_item_view;
-            case RECIPIENT_ALTERNATES:
-                return R.layout.chips_alternates_dropdown_item;
-            default:
-                return R.layout.chips_alternates_dropdown_item;
-        }
+    protected int getItemLayoutResId() {
+        // Always use contact list item view for base recipients
+        return R.layout.contact_list_item_view;
     }
 
     @Override
-    protected int getAlternateItemLayoutResId(AdapterType type) {
-        return getItemLayoutResId(type);
+    protected int getAlternateItemLayoutResId() {
+        // Use messaging-specific alternates layout
+        return R.layout.chips_alternates_dropdown_item;
     }
 }

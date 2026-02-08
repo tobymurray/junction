@@ -83,7 +83,6 @@ public final class ContactRecipientAdapter extends BaseRecipientAdapter {
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
-    @Override
     public boolean forceShowAddress() {
         // We should always use the SingleRecipientAddressAdapter
         // And never use the RecipientAlternatesAdapter
@@ -338,7 +337,6 @@ public final class ContactRecipientAdapter extends BaseRecipientAdapter {
      * we want to be able to look up in the ContactUtil for exact matches and get contact
      * details such as name and photo thumbnail for the contact to display a better chip.
      */
-    @Override
     public void getMatchingRecipients(final ArrayList<String> inAddresses,
             final RecipientMatchCallback callback) {
         final int addressesSize = Math.min(
