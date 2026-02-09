@@ -3,6 +3,7 @@ package com.technicallyrural.junction.matrix.impl
 import android.content.Context
 import com.technicallyrural.junction.matrix.*
 import kotlinx.coroutines.CoroutineScope
+import net.folivo.trixnity.client.MatrixClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 import net.folivo.trixnity.client.room
 import net.folivo.trixnity.client.room.message.text
 import net.folivo.trixnity.client.store.TimelineEvent
+import net.folivo.trixnity.core.model.RoomAliasId
 import net.folivo.trixnity.core.model.RoomId
 import net.folivo.trixnity.core.model.events.StateEventContent
 import net.folivo.trixnity.core.model.events.m.room.RoomMessageEventContent
@@ -185,9 +187,66 @@ class TrixnityMatrixBridge(
 
         val client = clientManager.client ?: return null
 
-        // TODO: Create or find control room with alias #junction_control:<server>
-        // For now, return null (control room creation is optional)
-        return null
+        // Create control room alias: #junction_control:<server>
+        val serverDomain = client.userId.domain
+        val alias = "#junction_control:$serverDomain"
+
+        // Try to resolve existing control room
+        val existingRoomId = tryResolveControlRoomAlias(client, alias)
+        if (existingRoomId != null) {
+            controlRoomIdCached = existingRoomId
+            return existingRoomId
+        }
+
+        // Create new control room if it doesn't exist
+        val newRoomId = createControlRoom(client, alias)
+        if (newRoomId != null) {
+            controlRoomIdCached = newRoomId
+        }
+        return newRoomId
+    }
+
+    /**
+     * Try to resolve control room alias to room ID.
+     * Returns null if alias doesn't exist.
+     */
+    private suspend fun tryResolveControlRoomAlias(client: MatrixClient, alias: String): String? {
+        return try {
+            val response = client.api.room.getRoomAlias(
+                roomAliasId = RoomAliasId(alias)
+            ).getOrNull()
+            response?.roomId?.full
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Create control room with canonical alias.
+     * Returns room ID on success, null on failure.
+     */
+    private suspend fun createControlRoom(client: MatrixClient, alias: String): String? {
+        return try {
+            val roomId = client.api.room.createRoom(
+                name = "Junction Control Room",
+                roomAliasId = RoomAliasId(alias),
+                isDirect = false,
+                invite = emptySet(),
+                topic = "Device status updates and control commands for Junction SMS bridge"
+            ).getOrElse {
+                // Fallback: Create room without alias if alias creation fails
+                client.api.room.createRoom(
+                    name = "Junction Control Room",
+                    isDirect = false,
+                    invite = emptySet()
+                ).getOrNull()
+            }
+
+            roomId?.full
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     override suspend fun startSync() {
