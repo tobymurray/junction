@@ -2,7 +2,7 @@
 // SMS-UPSTREAM MODULE
 // ============================================================================
 //
-// This module contains VENDORED AOSP Messaging source code.
+// This module contains VENDORED AOSP Messaging source code for Junction.
 //
 // RULES:
 // 1. Keep modifications MINIMAL

@@ -72,11 +72,11 @@ rm -rf sms-upstream/src/main/aidl/*
 # Clone fresh AOSP source to temp location
 git clone --depth 1 --branch android-XX.X.X_rYY \
     https://android.googlesource.com/platform/packages/apps/Messaging \
-    /tmp/aosp-messaging-new
+    /tmp/junction-aosp-update
 
 # Copy source files
-cp -r /tmp/aosp-messaging-new/src/* sms-upstream/src/main/java/
-cp -r /tmp/aosp-messaging-new/res/* sms-upstream/src/main/res/
+cp -r /tmp/junction-aosp-update/src/* sms-upstream/src/main/java/
+cp -r /tmp/junction-aosp-update/res/* sms-upstream/src/main/res/
 
 # Copy AIDL if present
 if [ -d /tmp/aosp-messaging-new/src/com/android/messaging/aidl ]; then

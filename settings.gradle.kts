@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AospMessaging"
+rootProject.name = "Junction"
 
 // ============================================================================
 // MODULE STRUCTURE

@@ -1,4 +1,4 @@
-# AOSP Messaging - Standalone Gradle Build
+# Junction - SMS Bridge Application
 
 A fork of AOSP Messaging (the Android Open Source Project's default SMS application)
 converted to a standalone Gradle-built Android application with clean architectural
@@ -7,9 +7,11 @@ separation for easy upstream updates.
 ## Architecture
 
 ```
-AospMessaging/
+Junction/
 ├── sms-upstream/     # Vendored AOSP Messaging (minimal patches)
 ├── core-sms/         # Adapter interfaces (SmsTransport, MessageStore, etc.)
+├── core-matrix/      # Matrix bridge interfaces
+├── matrix-impl/      # Matrix bridge implementation (Trixnity SDK)
 ├── app/              # Main application (UI, Matrix bridge, receivers)
 └── docs/             # Architecture and update documentation
 ```
@@ -96,7 +98,7 @@ The actual Android application containing:
 ```bash
 # Clone the repository
 git clone <repo-url>
-cd AospMessaging
+cd Junction
 
 # Build debug APK
 ./gradlew assembleDebug

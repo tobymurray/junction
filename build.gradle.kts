@@ -18,7 +18,7 @@ plugins {
 // UPSTREAM UPDATE POLICY
 // ============================================================================
 //
-// When AOSP Messaging updates are available:
+// When Junction (AOSP Messaging fork) updates are available:
 //
 // 1. REPLACE sms-upstream/src/ with new AOSP snapshot
 //    - Download new source from android.googlesource.com

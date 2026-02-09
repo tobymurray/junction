@@ -1,6 +1,6 @@
 # Testing Strategy
 
-This document defines the testing approach for the AospMessaging project, following a **hybrid strategy** that balances speed, reliability, and coverage.
+This document defines the testing approach for the Junction project, following a **hybrid strategy** that balances speed, reliability, and coverage.
 
 ## Test Types
 
