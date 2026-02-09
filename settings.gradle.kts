@@ -30,13 +30,25 @@ rootProject.name = "AospMessaging"
 //                  - Facades that wrap upstream implementation
 //                  - Shields app from upstream internals
 //
+// core-matrix/   → Matrix bridge interfaces (android-library)
+//                  - Defines interfaces for Matrix bridge functionality
+//                  - Room mapping, presence, message bridging
+//                  - NO Matrix SDK dependencies
+//
+// matrix-impl/   → Matrix bridge implementation (android-library)
+//                  - Implements core-matrix interfaces
+//                  - Uses Trixnity SDK
+//                  - Room database for mapping persistence
+//
 // app/           → Main application (android-application)
-//                  - UI, Matrix bridge, GrapheneOS integration
-//                  - Depends ONLY on core-sms interfaces
-//                  - NEVER imports from sms-upstream directly
+//                  - UI, Matrix bridge orchestration, GrapheneOS integration
+//                  - Depends ONLY on core-sms and core-matrix interfaces
+//                  - NEVER imports from sms-upstream or matrix-impl directly
 //
 // ============================================================================
 
 include(":sms-upstream")
 include(":core-sms")
+include(":core-matrix")
+include(":matrix-impl")
 include(":app")
