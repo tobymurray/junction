@@ -1,6 +1,7 @@
 package com.technicallyrural.junction.matrix.impl
 
 import android.content.Context
+import io.ktor.http.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -8,6 +9,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import net.folivo.trixnity.client.MatrixClient
+import net.folivo.trixnity.client.login
+import net.folivo.trixnity.client.media.createInMemoryMediaStoreModule
+import net.folivo.trixnity.clientserverapi.model.authentication.IdentifierType
+import org.koin.dsl.module
 
 /**
  * Real implementation of Matrix client manager using Trixnity SDK.
@@ -20,9 +26,8 @@ class TrixnityClientManager(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    // TODO: Replace Any? with actual MatrixClient type from trixnity-client once API is verified
-    private var _client: Any? = null
-    val client: Any? get() = _client
+    private var _client: MatrixClient? = null
+    val client: MatrixClient? get() = _client
 
     private val _isInitialized = MutableStateFlow(false)
     val isInitialized: Flow<Boolean> = _isInitialized.asStateFlow()
@@ -80,28 +85,25 @@ class TrixnityClientManager(
         password: String
     ): LoginResult {
         return try {
-            // TODO: Implement with Trixnity v4.22.7 API
-            // API Discovery needed:
-            // 1. Check actual login method in v4.22.7 (may be loginWithPassword or MatrixClient.login)
-            // 2. Determine correct import for login identifier types
-            // 3. Verify repositoriesModule creation API
-            // 4. Check MatrixClient property names (userId, accessToken, deviceId)
-            //
-            // Known patterns from docs (verify version):
-            // - loginWithPassword(baseUrl, identifier, password, ...)
-            // - MatrixClient.login(...) with auth provider
-            // - MatrixClient.create(...) with MatrixClientAuthProviderData
-            //
-            // Documentation sources:
-            // - https://trixnity.gitlab.io/trixnity/api/trixnity-client/
-            // - https://github.com/benkuly/trixnity (check examples/)
-            // - javadoc.io/doc/net.folivo/trixnity-client/4.22.7
+            // Create Matrix client with login credentials using v4.22.7 API
+            val matrixClient = MatrixClient.login(
+                baseUrl = Url(serverUrl),
+                identifier = IdentifierType.User(username),
+                password = password,
+                initialDeviceDisplayName = "Junction SMS Bridge",
+                repositoriesModule = createRepositoriesModule(),
+                mediaStoreModule = createInMemoryMediaStoreModule()
+            ).getOrElse { error ->
+                return LoginResult.Error(error.message ?: "Login failed")
+            }
 
-            // Return mock success for architecture testing
+            _client = matrixClient
+            _isInitialized.value = true
+
             LoginResult.Success(
-                userId = "@$username:${extractDomain(serverUrl)}",
-                accessToken = "mock_token_${System.currentTimeMillis()}",
-                deviceId = "mock_device"
+                userId = matrixClient.userId.full,
+                accessToken = "", // Note: Not directly exposed in v4.22.7 interface
+                deviceId = matrixClient.deviceId
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -119,8 +121,7 @@ class TrixnityClientManager(
         scope.launch {
             try {
                 _isSyncing.value = true
-                // TODO: Call matrixClient.startSync() once API is verified
-                // Expected: matrixClient.startSync() is a suspend blocking call
+                matrixClient.startSync() // Blocking call - runs until stopped
             } catch (e: Exception) {
                 e.printStackTrace()
                 _isSyncing.value = false
@@ -132,11 +133,22 @@ class TrixnityClientManager(
      * Stop the Matrix sync loop.
      */
     fun stopSync() {
-        // TODO: Call client.stopSync() when API is verified
-        // For now, just update state
+        _client?.close() // Closes the client and stops sync
         _isSyncing.value = false
     }
 
+
+    /**
+     * Create repositories module for storing Matrix state.
+     *
+     * Currently using in-memory repositories. For production, should use
+     * trixnity-client-repository-room for persistent storage.
+     */
+    private fun createRepositoriesModule() = module {
+        // TODO: Replace with Room-based repositories
+        // For now, using Trixnity's built-in in-memory implementation
+        // The repositories will be auto-created by Trixnity if not provided
+    }
 
     /**
      * Extract domain from server URL.

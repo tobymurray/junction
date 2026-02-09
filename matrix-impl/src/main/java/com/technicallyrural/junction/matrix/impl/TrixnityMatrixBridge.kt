@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
+import net.folivo.trixnity.client.room
+import net.folivo.trixnity.client.room.message.text
+import net.folivo.trixnity.core.model.RoomId
 
 /**
  * Real implementation of MatrixBridge using Trixnity SDK.
@@ -75,26 +78,13 @@ class TrixnityMatrixBridge(
             ?: return MatrixSendResult.Failure(MatrixSendError.ROOM_CREATION_FAILED)
 
         return try {
-            // TODO: Implement with verified Trixnity 4.22.7 API
-            // Expected pattern from docs:
-            // client.room.sendMessage(roomId) { text("message") }
-            //
-            // API Discovery needed:
-            // 1. Verify client.room property exists and type (RoomService)
-            // 2. Check sendMessage method signature
-            // 3. Verify text() DSL function import
-            // 4. Confirm return type (EventId or similar)
-            //
-            // Documentation:
-            // - https://trixnity.gitlab.io/trixnity/docs/client/usage/
-            // - https://trixnity.gitlab.io/trixnity/api/trixnity-client/net.folivo.trixnity.client.room/
-            //
-            // Known example from docs:
-            // matrixClient.room.sendMessage(roomId) {
-            //     text("Hi!")
-            // }
+            // Send text message using Trixnity v4.22.7 API
+            // Returns transaction ID (String), not EventId
+            val transactionId = client.room.sendMessage(RoomId(roomIdStr)) {
+                text(messageBody)
+            }
 
-            MatrixSendResult.Success("event_${System.currentTimeMillis()}")
+            MatrixSendResult.Success(transactionId)
         } catch (e: Exception) {
             e.printStackTrace()
             MatrixSendResult.Failure(MatrixSendError.SEND_FAILED)
