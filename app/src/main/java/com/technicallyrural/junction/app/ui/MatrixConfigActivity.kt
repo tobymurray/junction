@@ -5,11 +5,16 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.technicallyrural.junction.app.R
 import com.technicallyrural.junction.app.databinding.ActivityMatrixConfigBinding
 import com.technicallyrural.junction.app.matrix.MatrixConfig
 import com.technicallyrural.junction.app.matrix.MatrixConfigRepository
+import com.technicallyrural.junction.matrix.impl.TrixnityClientManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -24,6 +29,7 @@ class MatrixConfigActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMatrixConfigBinding
     private lateinit var repository: MatrixConfigRepository
+    private lateinit var clientManager: TrixnityClientManager
     private var currentConfig: MatrixConfig = MatrixConfig.EMPTY
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,6 +42,7 @@ class MatrixConfigActivity : AppCompatActivity() {
         supportActionBar?.title = "Matrix Configuration"
 
         repository = MatrixConfigRepository.getInstance(this)
+        clientManager = TrixnityClientManager(applicationContext)
 
         setupViews()
         loadConfiguration()
@@ -150,6 +157,8 @@ class MatrixConfigActivity : AppCompatActivity() {
 
     private fun testConnection() {
         val serverUrl = binding.serverUrlInput.text?.toString()?.trim() ?: ""
+        val username = binding.usernameInput.text?.toString()?.trim() ?: ""
+        val password = binding.passwordInput.text?.toString()?.trim() ?: ""
 
         if (serverUrl.isBlank()) {
             binding.serverUrlInput.error = "Server URL is required"
@@ -161,31 +170,157 @@ class MatrixConfigActivity : AppCompatActivity() {
             return
         }
 
+        if (username.isBlank()) {
+            binding.usernameInput.error = "Username is required for connection test"
+            return
+        }
+
+        if (password.isBlank()) {
+            binding.passwordInput.error = "Password is required for connection test"
+            return
+        }
+
         // Show progress
         binding.progressIndicator.visibility = View.VISIBLE
         binding.testConnectionButton.isEnabled = false
+        binding.saveButton.isEnabled = false
 
-        // TODO: Implement actual Matrix server connection test
-        // For now, just simulate a test
-        binding.root.postDelayed({
+        // Test connection in background
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                try {
+                    clientManager.login(serverUrl, username, password)
+                } catch (e: Exception) {
+                    TrixnityClientManager.LoginResult.Error(e.message ?: "Unknown error")
+                }
+            }
+
+            // Hide progress
             binding.progressIndicator.visibility = View.GONE
             binding.testConnectionButton.isEnabled = true
+            binding.saveButton.isEnabled = true
 
-            // Placeholder - replace with actual connection test
-            MaterialAlertDialogBuilder(this)
-                .setTitle("Connection Test")
-                .setMessage("Matrix connection testing will be implemented when the Matrix SDK is integrated.\n\nServer URL: $serverUrl")
-                .setPositiveButton("OK", null)
-                .show()
-        }, 1000)
+            // Show result
+            when (result) {
+                is TrixnityClientManager.LoginResult.Success -> {
+                    MaterialAlertDialogBuilder(this@MatrixConfigActivity)
+                        .setTitle("✓ Connection Successful")
+                        .setMessage(
+                            "Successfully connected to Matrix homeserver!\n\n" +
+                                    "Server: $serverUrl\n" +
+                                    "User ID: ${result.userId}\n" +
+                                    "Device ID: ${result.deviceId}\n\n" +
+                                    "Click Save to store these credentials."
+                        )
+                        .setPositiveButton("OK") { _, _ ->
+                            // Update config with successful login
+                            currentConfig = currentConfig.copy(
+                                userId = result.userId,
+                                accessToken = result.accessToken,
+                                deviceId = result.deviceId,
+                                lastConnectedTimestamp = System.currentTimeMillis()
+                            )
+                            updateConnectionStatus(currentConfig)
+                            binding.userIdInput.setText(result.userId)
+                            updateUserIdVisibility()
+                        }
+                        .show()
+                }
+                is TrixnityClientManager.LoginResult.Error -> {
+                    MaterialAlertDialogBuilder(this@MatrixConfigActivity)
+                        .setTitle("✗ Connection Failed")
+                        .setMessage(
+                            "Failed to connect to Matrix homeserver.\n\n" +
+                                    "Server: $serverUrl\n" +
+                                    "Error: ${result.message}\n\n" +
+                                    "Please check your server URL, username, and password."
+                        )
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+            }
+        }
     }
 
     private fun showLoginPrompt(password: String) {
+        val serverUrl = currentConfig.serverUrl
+        val username = currentConfig.username
+
+        if (serverUrl.isBlank() || username.isBlank()) {
+            Toast.makeText(this, "Server URL and username are required", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         MaterialAlertDialogBuilder(this)
             .setTitle("Matrix Login")
-            .setMessage("Password entered. Matrix authentication will be implemented when the Matrix SDK is integrated.\n\nUsername: ${currentConfig.username}\nServer: ${currentConfig.serverUrl}")
-            .setPositiveButton("OK", null)
+            .setMessage(
+                "Authenticate with Matrix homeserver?\n\n" +
+                        "Server: $serverUrl\n" +
+                        "Username: $username\n\n" +
+                        "This will test the connection and store your credentials."
+            )
+            .setPositiveButton("Login") { _, _ ->
+                performLogin(serverUrl, username, password)
+            }
+            .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun performLogin(serverUrl: String, username: String, password: String) {
+        // Show progress
+        binding.progressIndicator.visibility = View.VISIBLE
+        binding.saveButton.isEnabled = false
+        binding.testConnectionButton.isEnabled = false
+
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                try {
+                    clientManager.login(serverUrl, username, password)
+                } catch (e: Exception) {
+                    TrixnityClientManager.LoginResult.Error(e.message ?: "Unknown error")
+                }
+            }
+
+            // Hide progress
+            binding.progressIndicator.visibility = View.GONE
+            binding.saveButton.isEnabled = true
+            binding.testConnectionButton.isEnabled = true
+
+            when (result) {
+                is TrixnityClientManager.LoginResult.Success -> {
+                    // Save the authenticated configuration
+                    val authenticatedConfig = currentConfig.copy(
+                        userId = result.userId,
+                        accessToken = result.accessToken,
+                        deviceId = result.deviceId,
+                        lastConnectedTimestamp = System.currentTimeMillis()
+                    )
+                    repository.saveConfig(authenticatedConfig)
+                    currentConfig = authenticatedConfig
+
+                    Toast.makeText(
+                        this@MatrixConfigActivity,
+                        "Login successful! User: ${result.userId}",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    // Update UI
+                    binding.userIdInput.setText(result.userId)
+                    updateUserIdVisibility()
+                    updateConnectionStatus(authenticatedConfig)
+
+                    // Clear password field
+                    binding.passwordInput.setText("")
+                }
+                is TrixnityClientManager.LoginResult.Error -> {
+                    MaterialAlertDialogBuilder(this@MatrixConfigActivity)
+                        .setTitle("Login Failed")
+                        .setMessage("Failed to authenticate with Matrix homeserver.\n\nError: ${result.message}")
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+            }
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

@@ -79,6 +79,10 @@ dependencies {
     // App should NOT import directly from this module's packages
     implementation(project(":sms-upstream"))
 
+    // Core Matrix interfaces and implementation
+    implementation(project(":core-matrix"))
+    implementation(project(":matrix-impl"))
+
     // ========================================================================
     // AndroidX
     // ========================================================================
