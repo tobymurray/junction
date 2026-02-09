@@ -53,10 +53,10 @@ android {
     // AOSP uses Java, not Kotlin
     sourceSets {
         getByName("main") {
-            java.srcDirs("src/main/java")
-            res.srcDirs("src/main/res")
-            aidl.srcDirs("src/main/aidl")
-            assets.srcDirs("src/main/assets")
+            java.directories.add("src/main/java")
+            res.directories.add("src/main/res")
+            aidl.directories.add("src/main/aidl")
+            assets.directories.add("src/main/assets")
         }
     }
 
