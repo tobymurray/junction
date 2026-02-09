@@ -1,6 +1,7 @@
 package com.technicallyrural.junction.app.ui
 
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
@@ -160,6 +161,8 @@ class MatrixConfigActivity : AppCompatActivity() {
         val username = binding.usernameInput.text?.toString()?.trim() ?: ""
         val password = binding.passwordInput.text?.toString()?.trim() ?: ""
 
+        Log.d(TAG, "testConnection: serverUrl=$serverUrl, username=$username")
+
         if (serverUrl.isBlank()) {
             binding.serverUrlInput.error = "Server URL is required"
             return
@@ -180,6 +183,8 @@ class MatrixConfigActivity : AppCompatActivity() {
             return
         }
 
+        Log.d(TAG, "testConnection: Starting login attempt...")
+
         // Show progress
         binding.progressIndicator.visibility = View.VISIBLE
         binding.testConnectionButton.isEnabled = false
@@ -189,8 +194,12 @@ class MatrixConfigActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
                 try {
-                    clientManager.login(serverUrl, username, password)
+                    Log.d(TAG, "testConnection: Calling clientManager.login()...")
+                    val loginResult = clientManager.login(serverUrl, username, password)
+                    Log.d(TAG, "testConnection: Login result: $loginResult")
+                    loginResult
                 } catch (e: Exception) {
+                    Log.e(TAG, "testConnection: Exception during login", e)
                     TrixnityClientManager.LoginResult.Error(e.message ?: "Unknown error")
                 }
             }
@@ -201,8 +210,10 @@ class MatrixConfigActivity : AppCompatActivity() {
             binding.saveButton.isEnabled = true
 
             // Show result
+            Log.d(TAG, "testConnection: Showing result dialog...")
             when (result) {
                 is TrixnityClientManager.LoginResult.Success -> {
+                    Log.d(TAG, "testConnection: Success! userId=${result.userId}")
                     MaterialAlertDialogBuilder(this@MatrixConfigActivity)
                         .setTitle("✓ Connection Successful")
                         .setMessage(
@@ -227,6 +238,7 @@ class MatrixConfigActivity : AppCompatActivity() {
                         .show()
                 }
                 is TrixnityClientManager.LoginResult.Error -> {
+                    Log.e(TAG, "testConnection: Login failed: ${result.message}")
                     MaterialAlertDialogBuilder(this@MatrixConfigActivity)
                         .setTitle("✗ Connection Failed")
                         .setMessage(
@@ -331,5 +343,9 @@ class MatrixConfigActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    companion object {
+        private const val TAG = "MatrixConfigActivity"
     }
 }

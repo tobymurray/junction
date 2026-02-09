@@ -13,8 +13,8 @@ import net.folivo.trixnity.client.MatrixClient
 import net.folivo.trixnity.client.fromStore
 import net.folivo.trixnity.client.login
 import net.folivo.trixnity.client.media.createInMemoryMediaStoreModule
+import net.folivo.trixnity.client.store.repository.createInMemoryRepositoriesModule
 import net.folivo.trixnity.clientserverapi.model.authentication.IdentifierType
-import org.koin.dsl.module
 
 /**
  * Real implementation of Matrix client manager using Trixnity SDK.
@@ -158,11 +158,7 @@ class TrixnityClientManager(
      * Currently using in-memory repositories. For production, should use
      * trixnity-client-repository-room for persistent storage.
      */
-    private fun createRepositoriesModule() = module {
-        // TODO: Replace with Room-based repositories
-        // For now, using Trixnity's built-in in-memory implementation
-        // The repositories will be auto-created by Trixnity if not provided
-    }
+    private fun createRepositoriesModule() = createInMemoryRepositoriesModule()
 
     /**
      * Extract domain from server URL.
