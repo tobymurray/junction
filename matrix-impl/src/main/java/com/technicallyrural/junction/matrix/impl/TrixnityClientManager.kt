@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import net.folivo.trixnity.client.MatrixClient
+import net.folivo.trixnity.client.fromStore
 import net.folivo.trixnity.client.login
 import net.folivo.trixnity.client.media.createInMemoryMediaStoreModule
 import net.folivo.trixnity.clientserverapi.model.authentication.IdentifierType
@@ -38,11 +39,13 @@ class TrixnityClientManager(
     /**
      * Initialize MatrixClient from stored credentials.
      *
-     * @param serverUrl Homeserver URL (e.g., "https://matrix.org")
-     * @param userId Full Matrix user ID (e.g., "@user:matrix.org")
-     * @param deviceId Device ID from login
-     * @param accessToken Access token from login
-     * @return true if initialization succeeded
+     * Trixnity stores session data in its repositories automatically after login.
+     * This method attempts to restore the session from those stored credentials.
+     *
+     * Note: The parameters are kept for interface compatibility but not used directly.
+     * Trixnity loads credentials from its internal AccountStore.
+     *
+     * @return true if initialization succeeded, false if no stored session exists
      */
     suspend fun initializeFromStore(
         serverUrl: String,
@@ -51,19 +54,30 @@ class TrixnityClientManager(
         accessToken: String
     ): Boolean {
         return try {
-            // TODO: Implement with Trixnity v4.22.7 API
-            // API Discovery needed:
-            // 1. Check if MatrixClient.fromStore() exists in v4.22.7
-            // 2. Verify correct way to restore session from stored credentials
-            // 3. Documentation: https://trixnity.gitlab.io/trixnity/docs/client/create/
-            // 4. Alternative: Check javadoc at javadoc.io/doc/net.folivo/trixnity-client/4.22.7
-            //
-            // Example pattern from docs (version may vary):
-            // val client = MatrixClient.fromStore(repositoriesModule, mediaStore)
+            // Attempt to restore client from Trixnity's internal storage
+            val result = MatrixClient.fromStore(
+                repositoriesModule = createRepositoriesModule(),
+                mediaStoreModule = createInMemoryMediaStoreModule()
+            )
 
-            // For now, mark as initialized to allow testing of architecture
-            _isInitialized.value = true
-            true
+            result.fold(
+                onSuccess = { matrixClient ->
+                    if (matrixClient != null) {
+                        _client = matrixClient
+                        _isInitialized.value = true
+                        true
+                    } else {
+                        // No stored session found
+                        _isInitialized.value = false
+                        false
+                    }
+                },
+                onFailure = { error ->
+                    error.printStackTrace()
+                    _isInitialized.value = false
+                    false
+                }
+            )
         } catch (e: Exception) {
             e.printStackTrace()
             _isInitialized.value = false

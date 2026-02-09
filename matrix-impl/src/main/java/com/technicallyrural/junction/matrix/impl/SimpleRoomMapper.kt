@@ -6,6 +6,8 @@ import android.telephony.PhoneNumberUtils
 import com.technicallyrural.junction.matrix.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import net.folivo.trixnity.core.model.RoomAliasId
+import net.folivo.trixnity.core.model.RoomId
 import java.util.Locale
 
 /**
@@ -135,26 +137,24 @@ class SimpleRoomMapper(
     }
 
     /**
-     * Try to resolve a room alias to a room ID.
-     *
-     * TODO: Implement with verified Trixnity 4.22.7 API
+     * Try to resolve a room alias to a room ID using Trixnity API.
      */
     private suspend fun tryResolveAlias(alias: String): String? {
         val client = clientManager.client ?: return null
 
         return try {
-            // TODO: Use client.api.room.getRoomAlias(RoomAliasId(alias))
-            // API verification needed for v4.22.7
-            null
+            val response = client.api.room.getRoomAlias(
+                roomAliasId = RoomAliasId(alias)
+            ).getOrNull()
+
+            response?.roomId?.full
         } catch (e: Exception) {
             null
         }
     }
 
     /**
-     * Create a new DM room for a contact.
-     *
-     * TODO: Implement with verified Trixnity 4.22.7 API
+     * Create a new DM room for a contact using Trixnity API.
      */
     private suspend fun createRoomForContact(
         phoneE164: String,
@@ -163,11 +163,25 @@ class SimpleRoomMapper(
         val client = clientManager.client ?: return null
 
         return try {
-            // TODO: Use client.room.createRoom(...) with verified API
-            // For now, generate stub room ID
-            val stubRoomId = "!stub_${phoneE164.replace("+", "")}:$homeserverDomain"
-            saveMapping(phoneE164, stubRoomId, alias)
-            stubRoomId
+            val roomId = client.api.room.createRoom(
+                name = "SMS: $phoneE164",
+                roomAliasId = RoomAliasId(alias),
+                isDirect = true,
+                invite = emptySet() // No invites needed for self-DM
+            ).getOrElse { error ->
+                // If alias creation fails, try without alias
+                client.api.room.createRoom(
+                    name = "SMS: $phoneE164",
+                    isDirect = true
+                ).getOrNull()
+            }
+
+            if (roomId != null) {
+                saveMapping(phoneE164, roomId.full, alias)
+                roomId.full
+            } else {
+                null
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             null
