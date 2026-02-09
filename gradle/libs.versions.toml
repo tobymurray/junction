@@ -27,12 +27,12 @@ ksp = "2.3.5"
 # AndroidX - latest stable versions as of Jan 2026
 androidx-core = "1.17.0"
 androidx-appcompat = "1.7.1"
-androidx-activity = "1.10.0"
-androidx-fragment = "1.8.5"
+androidx-activity = "1.12.3"
+androidx-fragment = "1.8.9"
 androidx-recyclerview = "1.4.0"
-androidx-constraintlayout = "2.2.0"
-androidx-security-crypto = "1.1.0-alpha06"
-androidx-lifecycle = "2.9.0"
+androidx-constraintlayout = "2.2.1"
+androidx-security-crypto = "1.1.0"
+androidx-lifecycle = "2.10.0"
 androidx-annotation = "1.9.1"
 
 # Material Design - latest stable (1.14.x is alpha)
