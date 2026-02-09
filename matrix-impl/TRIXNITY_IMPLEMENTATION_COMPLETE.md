@@ -174,7 +174,47 @@ client.room.sendMessage(roomId: RoomId) {
 
 ---
 
-### 8. MMS Media Upload 🚧
+### 8. Control Room Creation ✅
+**File:** `TrixnityMatrixBridge.kt` (lines 187-249)
+
+**Implemented:**
+- Create or resolve control room with canonical alias
+- Alias format: `#junction_control:<server>`
+- In-memory caching of control room ID
+- Graceful fallback if alias creation fails
+
+**API Used:**
+```kotlin
+// Resolve existing room by alias
+client.api.room.getRoomAlias(
+    roomAliasId: RoomAliasId
+): Result<GetRoomAlias.Response>
+
+// Create new room with alias
+client.api.room.createRoom(
+    name: String,
+    roomAliasId: RoomAliasId,
+    isDirect: Boolean,
+    invite: Set<UserId>,
+    topic: String?
+): Result<RoomId>
+```
+
+**Control Room Purpose:**
+- Receives device status state events from `updatePresence()`
+- Single room per homeserver (shared across all contacts)
+- Not a DM room (isDirect = false)
+
+**Logic Flow:**
+1. Check in-memory cache first
+2. Try to resolve alias to existing room ID
+3. If not found, create new room with alias
+4. If alias creation fails, create room without alias (fallback)
+5. Cache room ID for subsequent calls
+
+---
+
+### 9. MMS Media Upload 🚧
 **File:** `TrixnityMatrixBridge.kt` (lines 99-149)
 
 **Implemented:**
@@ -285,10 +325,14 @@ BUILD SUCCESSFUL in 11s
 **Workaround:** Return empty string in `LoginResult.Success`
 **Impact:** Cannot store access token separately (not needed since `fromStore()` handles it)
 
-### 4. Control Room Creation
-**Status:** `getControlRoomId()` returns null
-**Impact:** Cannot send presence updates until control room is created
-**Next Steps:** Implement control room creation with alias `#junction_control:<server>`
+### 4. Control Room Creation ✅
+**Status:** Fully implemented (commit c1d8990)
+**Features:**
+- Resolves existing control room by alias `#junction_control:<server>`
+- Creates new control room if alias doesn't exist
+- Fallback to room without alias if alias creation fails
+- In-memory caching of room ID
+**Impact:** Presence updates via `updatePresence()` now fully functional
 
 ---
 
@@ -326,9 +370,9 @@ BUILD SUCCESSFUL in 11s
 
 ## Files Modified
 
-1. **`TrixnityClientManager.kt`** - Session restoration implementation
-2. **`SimpleRoomMapper.kt`** - Room alias resolution and creation
-3. **`TrixnityMatrixBridge.kt`** - Timeline subscription, presence updates, MMS structure
+1. **`TrixnityClientManager.kt`** - Session restoration, login, sync management
+2. **`SimpleRoomMapper.kt`** - Room alias resolution and DM room creation
+3. **`TrixnityMatrixBridge.kt`** - Timeline subscription, presence updates, control room, MMS structure
 4. **`DeviceStatusContent`** - Custom state event class (new)
 
 ---
@@ -336,10 +380,7 @@ BUILD SUCCESSFUL in 11s
 ## Next Steps
 
 ### Immediate (Required for MVP)
-1. **Implement Control Room Creation**
-   - Create `#junction_control:<server>` room
-   - Store control room ID
-   - Enable presence updates
+1. ✅ ~~Implement Control Room Creation~~ - **COMPLETE** (commit c1d8990)
 
 2. **Test on Real Device**
    - Login to Matrix homeserver
@@ -378,7 +419,15 @@ BUILD SUCCESSFUL in 11s
 
 ## Conclusion
 
-The Trixnity SDK v4.22.7 integration is **functionally complete** for core SMS↔Matrix bridging. All stubbed implementations have been replaced with real API calls, and the project builds successfully.
+The Trixnity SDK v4.22.7 integration is **functionally complete** for core SMS↔Matrix bridging. All stubbed implementations have been replaced with real API calls, including:
+
+✅ Login and session restoration
+✅ Room creation with aliases
+✅ Timeline event subscription
+✅ Message sending (text)
+✅ Control room creation
+✅ Presence/status updates
+🚧 MMS media upload (structured, needs file upload implementation)
 
 The architecture is sound, the code compiles, and the foundation is ready for testing and refinement. MMS media upload is the only feature with TODO placeholders, but the structure is in place for straightforward completion.
 
