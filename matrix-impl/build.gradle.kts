@@ -62,6 +62,9 @@ dependencies {
     implementation(libs.trixnity.client)
     // implementation(libs.trixnity.client.media) // Not available in 4.22.7
 
+    // Ktor HTTP client engine (required by Trixnity for network requests)
+    implementation(libs.ktor.client.okhttp)
+
     // ========================================================================
     // Room database for room mapping
     // ========================================================================
