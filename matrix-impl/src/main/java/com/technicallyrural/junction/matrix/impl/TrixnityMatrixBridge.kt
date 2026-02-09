@@ -76,8 +76,23 @@ class TrixnityMatrixBridge(
 
         return try {
             // TODO: Implement with verified Trixnity 4.22.7 API
-            // Expected: client.room.sendMessage(roomId) { text(messageBody) }
-            // Needs API verification from actual SDK docs/examples
+            // Expected pattern from docs:
+            // client.room.sendMessage(roomId) { text("message") }
+            //
+            // API Discovery needed:
+            // 1. Verify client.room property exists and type (RoomService)
+            // 2. Check sendMessage method signature
+            // 3. Verify text() DSL function import
+            // 4. Confirm return type (EventId or similar)
+            //
+            // Documentation:
+            // - https://trixnity.gitlab.io/trixnity/docs/client/usage/
+            // - https://trixnity.gitlab.io/trixnity/api/trixnity-client/net.folivo.trixnity.client.room/
+            //
+            // Known example from docs:
+            // matrixClient.room.sendMessage(roomId) {
+            //     text("Hi!")
+            // }
 
             MatrixSendResult.Success("event_${System.currentTimeMillis()}")
         } catch (e: Exception) {

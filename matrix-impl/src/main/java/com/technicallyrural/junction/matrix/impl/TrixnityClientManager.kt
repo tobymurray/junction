@@ -8,10 +8,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import net.folivo.trixnity.client.MatrixClient
-import net.folivo.trixnity.client.fromStore
-import net.folivo.trixnity.client.login
-import net.folivo.trixnity.core.model.UserId
 
 /**
  * Real implementation of Matrix client manager using Trixnity SDK.
@@ -24,8 +20,9 @@ class TrixnityClientManager(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private var _client: MatrixClient? = null
-    val client: MatrixClient? get() = _client
+    // TODO: Replace Any? with actual MatrixClient type from trixnity-client once API is verified
+    private var _client: Any? = null
+    val client: Any? get() = _client
 
     private val _isInitialized = MutableStateFlow(false)
     val isInitialized: Flow<Boolean> = _isInitialized.asStateFlow()
@@ -49,13 +46,17 @@ class TrixnityClientManager(
         accessToken: String
     ): Boolean {
         return try {
-            // TODO: Initialize from stored session
-            // For now, using login as initialization method
-            // Trixnity 4.x API may differ from v5 docs
+            // TODO: Implement with Trixnity v4.22.7 API
+            // API Discovery needed:
+            // 1. Check if MatrixClient.fromStore() exists in v4.22.7
+            // 2. Verify correct way to restore session from stored credentials
+            // 3. Documentation: https://trixnity.gitlab.io/trixnity/docs/client/create/
+            // 4. Alternative: Check javadoc at javadoc.io/doc/net.folivo/trixnity-client/4.22.7
+            //
+            // Example pattern from docs (version may vary):
+            // val client = MatrixClient.fromStore(repositoriesModule, mediaStore)
 
-            // Note: Actual token-based restoration requires MatrixClient.fromStore()
-            // which needs proper session serialization
-
+            // For now, mark as initialized to allow testing of architecture
             _isInitialized.value = true
             true
         } catch (e: Exception) {
@@ -79,15 +80,28 @@ class TrixnityClientManager(
         password: String
     ): LoginResult {
         return try {
-            // TODO: Implement proper Trixnity login flow
-            // Trixnity 4.22.7 API needs to be verified against actual SDK
-            // The login API may require different parameters than documented in v5
+            // TODO: Implement with Trixnity v4.22.7 API
+            // API Discovery needed:
+            // 1. Check actual login method in v4.22.7 (may be loginWithPassword or MatrixClient.login)
+            // 2. Determine correct import for login identifier types
+            // 3. Verify repositoriesModule creation API
+            // 4. Check MatrixClient property names (userId, accessToken, deviceId)
+            //
+            // Known patterns from docs (verify version):
+            // - loginWithPassword(baseUrl, identifier, password, ...)
+            // - MatrixClient.login(...) with auth provider
+            // - MatrixClient.create(...) with MatrixClientAuthProviderData
+            //
+            // Documentation sources:
+            // - https://trixnity.gitlab.io/trixnity/api/trixnity-client/
+            // - https://github.com/benkuly/trixnity (check examples/)
+            // - javadoc.io/doc/net.folivo/trixnity-client/4.22.7
 
-            // For now, return stub result to demonstrate architecture
+            // Return mock success for architecture testing
             LoginResult.Success(
                 userId = "@$username:${extractDomain(serverUrl)}",
-                accessToken = "stub_token_${System.currentTimeMillis()}",
-                deviceId = "stub_device"
+                accessToken = "mock_token_${System.currentTimeMillis()}",
+                deviceId = "mock_device"
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -105,7 +119,8 @@ class TrixnityClientManager(
         scope.launch {
             try {
                 _isSyncing.value = true
-                matrixClient.startSync() // Blocking call
+                // TODO: Call matrixClient.startSync() once API is verified
+                // Expected: matrixClient.startSync() is a suspend blocking call
             } catch (e: Exception) {
                 e.printStackTrace()
                 _isSyncing.value = false
