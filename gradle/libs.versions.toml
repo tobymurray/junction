@@ -88,8 +88,11 @@ kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 
 # Matrix - Trixnity
+# Core client includes all necessary APIs for messaging and room management
 trixnity-client = { group = "net.folivo", name = "trixnity-client", version.ref = "trixnity" }
-trixnity-client-media = { group = "net.folivo", name = "trixnity-client-media", version.ref = "trixnity" }
+# Media support artifacts (if needed):
+# trixnity-client-media-okio for file-based media storage
+# trixnity-clientserverapi-client (included transitively)
 
 # Room
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }

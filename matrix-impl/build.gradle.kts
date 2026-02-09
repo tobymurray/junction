@@ -19,8 +19,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    // KSP is compatible with Kotlin 2.3.10 - add when ready to enable Room
-    // alias(libs.plugins.ksp)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -58,20 +57,17 @@ dependencies {
 
     // ========================================================================
     // Matrix SDK - Trixnity
-    // Trixnity 4.22.7 available - uncomment when ready to integrate
-    // Currently using stub implementations for compile-time testing
+    // Note: Media functionality is included in trixnity-client-media-okio
     // ========================================================================
-    // implementation(libs.trixnity.client)
-    // implementation(libs.trixnity.client.media)
+    implementation(libs.trixnity.client)
+    // implementation(libs.trixnity.client.media) // Not available in 4.22.7
 
     // ========================================================================
     // Room database for room mapping
-    // KSP 2.3.5 + Kotlin 2.3.10 are now compatible with Room 2.8.4
-    // Uncomment when ready to migrate from SharedPreferences stub implementation
     // ========================================================================
-    // implementation(libs.androidx.room.runtime)
-    // implementation(libs.androidx.room.ktx)
-    // ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     // ========================================================================
     // AndroidX
