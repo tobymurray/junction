@@ -23,7 +23,7 @@
 
 plugins {
     alias(libs.plugins.android.library)
-    // Note: Kotlin plugin not needed - AGP 9.0+ has built-in Kotlin support
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
@@ -51,7 +51,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // AGP 9.0+ configures Kotlin through compileOptions (jvmTarget matches targetCompatibility)
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
 }
 
 dependencies {

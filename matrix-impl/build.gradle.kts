@@ -18,8 +18,9 @@
 
 plugins {
     alias(libs.plugins.android.library)
-    // AGP 9.0 provides built-in Kotlin support
-    // TODO: Add KSP when compatible version is available for Kotlin 2.2.10
+    alias(libs.plugins.kotlin.android)
+    // KSP is compatible with Kotlin 2.3.10 - add when ready to enable Room
+    // alias(libs.plugins.ksp)
 }
 
 android {
@@ -34,6 +35,12 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
 
     buildFeatures {
@@ -51,18 +58,20 @@ dependencies {
 
     // ========================================================================
     // Matrix SDK - Trixnity
-    // TODO: Enable when API usage is clarified for v4.22.7+
-    // For now, using stub implementations
+    // Trixnity 4.22.7 available - uncomment when ready to integrate
+    // Currently using stub implementations for compile-time testing
     // ========================================================================
     // implementation(libs.trixnity.client)
+    // implementation(libs.trixnity.client.media)
 
     // ========================================================================
     // Room database for room mapping
-    // TODO: Enable when KSP is compatible with Kotlin 2.2.10
-    // Stub implementation uses SharedPreferences
+    // KSP 2.3.5 + Kotlin 2.3.10 are now compatible with Room 2.8.4
+    // Uncomment when ready to migrate from SharedPreferences stub implementation
     // ========================================================================
     // implementation(libs.androidx.room.runtime)
     // implementation(libs.androidx.room.ktx)
+    // ksp(libs.androidx.room.compiler)
 
     // ========================================================================
     // AndroidX

@@ -2,9 +2,16 @@
 // Module-specific configuration goes in each module's build.gradle.kts
 
 plugins {
+// AGP 9.0 handles Kotlin compilation natively, but we apply these aliases
+    // so sub-modules can use them without repeating version numbers.
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
-    // Note: Kotlin plugin not needed - AGP 9.0+ has built-in Kotlin support
+
+    // IMPORTANT: Even though AGP has built-in Kotlin, KSP 2.3+ still
+    // requires the Kotlin Gradle Plugin to be present in the buildscript
+    // to process annotations correctly.
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.ksp) apply false
 }
 
 // ============================================================================

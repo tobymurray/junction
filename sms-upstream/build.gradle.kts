@@ -23,6 +23,7 @@
 
 plugins {
     alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
@@ -50,7 +51,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // AOSP uses Java, not Kotlin
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
+
+    // AOSP uses Java, with Kotlin adapters
     sourceSets {
         getByName("main") {
             java.directories.add("src/main/java")
