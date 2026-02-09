@@ -55,12 +55,12 @@ androidx-work = "2.9.1"
 
 # Testing
 junit = "4.13.2"
-mockk = "1.13.14"
-turbine = "1.2.0"
-robolectric = "4.14"
-androidx-test-core = "1.6.1"
-androidx-test-runner = "1.6.2"
-espresso = "3.6.1"
+mockk = "1.14.9"
+turbine = "1.2.1"
+robolectric = "4.16.1"
+androidx-test-core = "1.7.0"
+androidx-test-runner = "1.7.0"
+espresso = "3.7.0"
 
 [libraries]
 # AndroidX
