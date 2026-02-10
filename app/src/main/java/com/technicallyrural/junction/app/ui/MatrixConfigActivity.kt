@@ -13,6 +13,8 @@ import com.technicallyrural.junction.app.databinding.ActivityMatrixConfigBinding
 import com.technicallyrural.junction.app.matrix.MatrixConfig
 import com.technicallyrural.junction.app.matrix.MatrixConfigRepository
 import com.technicallyrural.junction.matrix.impl.TrixnityClientManager
+import com.technicallyrural.junction.matrix.impl.TrixnityMatrixBridge
+import com.technicallyrural.junction.matrix.impl.SimpleRoomMapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -224,16 +226,22 @@ class MatrixConfigActivity : AppCompatActivity() {
                                     "Click Save to store these credentials."
                         )
                         .setPositiveButton("OK") { _, _ ->
-                            // Update config with successful login
-                            currentConfig = currentConfig.copy(
+                            // Save authenticated configuration
+                            val authenticatedConfig = currentConfig.copy(
                                 userId = result.userId,
                                 accessToken = result.accessToken,
                                 deviceId = result.deviceId,
                                 lastConnectedTimestamp = System.currentTimeMillis()
                             )
+                            repository.saveConfig(authenticatedConfig)
+                            currentConfig = authenticatedConfig
+
                             updateConnectionStatus(currentConfig)
                             binding.userIdInput.setText(result.userId)
                             updateUserIdVisibility()
+
+                            // Trigger control room creation for testing
+                            createControlRoomForTesting()
                         }
                         .show()
                 }
@@ -323,6 +331,9 @@ class MatrixConfigActivity : AppCompatActivity() {
 
                     // Clear password field
                     binding.passwordInput.setText("")
+
+                    // Trigger control room creation for testing
+                    createControlRoomForTesting()
                 }
                 is TrixnityClientManager.LoginResult.Error -> {
                     MaterialAlertDialogBuilder(this@MatrixConfigActivity)
@@ -331,6 +342,53 @@ class MatrixConfigActivity : AppCompatActivity() {
                         .setPositiveButton("OK", null)
                         .show()
                 }
+            }
+        }
+    }
+
+    /**
+     * Create control room for testing purposes.
+     * This demonstrates the control room creation feature.
+     */
+    private fun createControlRoomForTesting() {
+        lifecycleScope.launch {
+            try {
+                // Create bridge instance (normally done by MatrixRegistry)
+                val serverDomain = currentConfig.serverUrl
+                    .removePrefix("https://")
+                    .removePrefix("http://")
+                    .substringBefore(":")
+                    .substringBefore("/")
+
+                val roomMapper = SimpleRoomMapper(
+                    context = applicationContext,
+                    clientManager = clientManager,
+                    homeserverDomain = serverDomain
+                )
+
+                val bridge = TrixnityMatrixBridge(
+                    context = applicationContext,
+                    clientManager = clientManager,
+                    roomMapper = roomMapper
+                )
+
+                // Trigger control room creation
+                val controlRoomId = withContext(Dispatchers.IO) {
+                    bridge.getControlRoomId()
+                }
+
+                if (controlRoomId != null) {
+                    Log.d(TAG, "Control room created: $controlRoomId")
+                    Toast.makeText(
+                        this@MatrixConfigActivity,
+                        "Control room created: $controlRoomId",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    Log.w(TAG, "Control room creation returned null")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to create control room", e)
             }
         }
     }

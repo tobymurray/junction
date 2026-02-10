@@ -59,9 +59,12 @@ data class MatrixConfig(
 
     /**
      * Returns true if we have valid authentication credentials.
+     *
+     * Note: We only check userId and deviceId because Trixnity manages
+     * the access token internally and doesn't expose it in v4.22.7.
      */
     fun isAuthenticated(): Boolean {
-        return userId.isNotBlank() && accessToken.isNotBlank()
+        return userId.isNotBlank() && deviceId.isNotBlank()
     }
 
     // Parcelable implementation
