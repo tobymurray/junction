@@ -110,7 +110,7 @@ class MatrixConfigActivity : AppCompatActivity() {
         }
 
         binding.statusText.text = statusText
-        binding.statusIndicator.backgroundTintList = ColorStateList.valueOf(indicatorColor)
+        binding.statusIndicator.setColorFilter(indicatorColor)
 
         // Format last connected timestamp
         val lastConnectedText = if (config.lastConnectedTimestamp > 0) {

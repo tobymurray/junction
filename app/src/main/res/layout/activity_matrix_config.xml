@@ -58,13 +58,14 @@
                     android:gravity="center_vertical">
 
                     <!-- Status indicator dot -->
-                    <View
+                    <ImageView
                         android:id="@+id/status_indicator"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
                         android:layout_marginEnd="8dp"
-                        android:background="@drawable/status_indicator_background"
-                        tools:backgroundTint="#F44336" />
+                        android:src="@drawable/status_indicator_background"
+                        android:contentDescription="@string/connection_status_indicator"
+                        tools:tint="#4CAF50" />
 
                     <TextView
                         android:id="@+id/status_text"
