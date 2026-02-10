@@ -19,6 +19,7 @@ import com.technicallyrural.junction.app.matrix.MatrixConfig
 import com.technicallyrural.junction.app.matrix.MatrixConfigRepository
 import com.technicallyrural.junction.app.service.MatrixSyncService
 import com.technicallyrural.junction.matrix.impl.TrixnityClientManager
+import com.technicallyrural.junction.matrix.impl.TrixnityClientManagerSingleton
 import com.technicallyrural.junction.matrix.impl.TrixnityMatrixBridge
 import com.technicallyrural.junction.matrix.impl.SimpleRoomMapper
 import kotlinx.coroutines.Dispatchers
@@ -54,7 +55,7 @@ class MatrixConfigActivity : AppCompatActivity() {
         supportActionBar?.title = "Matrix Configuration"
 
         repository = MatrixConfigRepository.getInstance(this)
-        clientManager = TrixnityClientManager(applicationContext)
+        clientManager = TrixnityClientManagerSingleton.getInstance(this)
 
         setupViews()
         loadConfiguration()

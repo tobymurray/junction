@@ -16,6 +16,7 @@ import com.technicallyrural.junction.app.ui.MatrixConfigActivity
 import com.technicallyrural.junction.matrix.MatrixRegistry
 import com.technicallyrural.junction.matrix.impl.SimpleRoomMapper
 import com.technicallyrural.junction.matrix.impl.TrixnityClientManager
+import com.technicallyrural.junction.matrix.impl.TrixnityClientManagerSingleton
 import com.technicallyrural.junction.matrix.impl.TrixnityMatrixBridge
 import com.technicallyrural.junction.core.CoreSmsRegistry
 import com.technicallyrural.junction.core.transport.SendResult
@@ -57,7 +58,7 @@ class MatrixSyncService : Service() {
         Log.d(TAG, "MatrixSyncService created")
 
         configRepository = MatrixConfigRepository.getInstance(this)
-        clientManager = TrixnityClientManager(applicationContext)
+        clientManager = TrixnityClientManagerSingleton.getInstance(this)
 
         // Create notification channel
         createNotificationChannel()

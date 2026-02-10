@@ -36,6 +36,10 @@ class TrixnityClientManager(
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: Flow<Boolean> = _isSyncing.asStateFlow()
 
+    // Reusable repositories module - created once and shared across login/restore
+    private val repositoriesModule = createInMemoryRepositoriesModule()
+    private val mediaStoreModule = createInMemoryMediaStoreModule()
+
     /**
      * Initialize MatrixClient from stored credentials.
      *
@@ -56,8 +60,8 @@ class TrixnityClientManager(
         return try {
             // Attempt to restore client from Trixnity's internal storage
             val result = MatrixClient.fromStore(
-                repositoriesModule = createRepositoriesModule(),
-                mediaStoreModule = createInMemoryMediaStoreModule()
+                repositoriesModule = repositoriesModule,
+                mediaStoreModule = mediaStoreModule
             )
 
             result.fold(
@@ -105,8 +109,8 @@ class TrixnityClientManager(
                 identifier = IdentifierType.User(username),
                 password = password,
                 initialDeviceDisplayName = "Junction SMS Bridge",
-                repositoriesModule = createRepositoriesModule(),
-                mediaStoreModule = createInMemoryMediaStoreModule()
+                repositoriesModule = repositoriesModule,
+                mediaStoreModule = mediaStoreModule
             ).getOrElse { error ->
                 return LoginResult.Error(error.message ?: "Login failed")
             }
@@ -149,26 +153,6 @@ class TrixnityClientManager(
     fun stopSync() {
         _client?.close() // Closes the client and stops sync
         _isSyncing.value = false
-    }
-
-
-    /**
-     * Create repositories module for storing Matrix state.
-     *
-     * Currently using in-memory repositories. For production, should use
-     * trixnity-client-repository-room for persistent storage.
-     */
-    private fun createRepositoriesModule() = createInMemoryRepositoriesModule()
-
-    /**
-     * Extract domain from server URL.
-     */
-    private fun extractDomain(serverUrl: String): String {
-        return serverUrl
-            .removePrefix("https://")
-            .removePrefix("http://")
-            .substringBefore(":")
-            .substringBefore("/")
     }
 
     sealed class LoginResult {
