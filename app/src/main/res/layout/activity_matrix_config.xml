@@ -50,12 +50,30 @@
                     android:textStyle="bold"
                     android:paddingBottom="8dp" />
 
-                <TextView
-                    android:id="@+id/status_text"
-                    android:layout_width="wrap_content"
+                <!-- Status indicator row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    tools:text="Not connected" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <!-- Status indicator dot -->
+                    <View
+                        android:id="@+id/status_indicator"
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/status_indicator_background"
+                        tools:backgroundTint="#F44336" />
+
+                    <TextView
+                        android:id="@+id/status_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        tools:text="Not connected" />
+
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/last_connected_text"

@@ -1,11 +1,14 @@
 package com.technicallyrural.junction.app.ui
 
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.technicallyrural.junction.app.R
@@ -90,14 +93,24 @@ class MatrixConfigActivity : AppCompatActivity() {
     }
 
     private fun updateConnectionStatus(config: MatrixConfig) {
-        val statusText = when {
-            !config.isConfigured() -> "Not configured"
-            !config.isAuthenticated() -> "Configured (not logged in)"
-            config.enabled -> "Configured and enabled"
-            else -> "Configured (disabled)"
+        // Determine status and color
+        val (statusText, indicatorColor) = when {
+            !config.isConfigured() -> {
+                "Not configured" to Color.parseColor("#9E9E9E") // Gray
+            }
+            !config.isAuthenticated() -> {
+                "Configured (not logged in)" to Color.parseColor("#FF9800") // Amber/Orange
+            }
+            config.enabled -> {
+                "Authenticated and enabled" to Color.parseColor("#4CAF50") // Green
+            }
+            else -> {
+                "Authenticated (disabled)" to Color.parseColor("#FF9800") // Amber/Orange
+            }
         }
 
         binding.statusText.text = statusText
+        binding.statusIndicator.backgroundTintList = ColorStateList.valueOf(indicatorColor)
 
         // Format last connected timestamp
         val lastConnectedText = if (config.lastConnectedTimestamp > 0) {
