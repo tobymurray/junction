@@ -9,6 +9,8 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.technicallyrural.junction.app.R
@@ -44,6 +46,9 @@ class MatrixConfigActivity : AppCompatActivity() {
         binding = ActivityMatrixConfigBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Handle edge-to-edge display (Android 15+)
+        setupEdgeToEdge()
+
         // Enable up navigation
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Matrix Configuration"
@@ -53,6 +58,27 @@ class MatrixConfigActivity : AppCompatActivity() {
 
         setupViews()
         loadConfiguration()
+    }
+
+    /**
+     * Configure edge-to-edge display handling.
+     * Applies window insets to avoid overlapping with system bars.
+     */
+    private fun setupEdgeToEdge() {
+        // Apply window insets to the root view
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+            // Apply padding to avoid system bars
+            view.setPadding(
+                systemBars.left,
+                systemBars.top,
+                systemBars.right,
+                systemBars.bottom
+            )
+
+            WindowInsetsCompat.CONSUMED
+        }
     }
 
     private fun setupViews() {
