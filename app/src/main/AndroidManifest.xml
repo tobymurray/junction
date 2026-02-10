@@ -51,11 +51,13 @@
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
 
     <!-- ====================================================================
-         NOTIFICATIONS
+         NOTIFICATIONS & FOREGROUND SERVICE
          ==================================================================== -->
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <!-- ====================================================================
          FEATURE DECLARATIONS
@@ -130,6 +132,16 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.MainActivity" />
         </activity>
+
+        <!-- ================================================================
+             MATRIX SYNC SERVICE (app module)
+             ================================================================ -->
+
+        <service
+            android:name=".service.MatrixSyncService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <!-- All sms-upstream components (activities, receivers, services,
              providers) are declared in sms-upstream/src/main/AndroidManifest.xml

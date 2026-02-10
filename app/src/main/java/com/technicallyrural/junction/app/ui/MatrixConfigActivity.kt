@@ -15,6 +15,7 @@ import com.technicallyrural.junction.app.R
 import com.technicallyrural.junction.app.databinding.ActivityMatrixConfigBinding
 import com.technicallyrural.junction.app.matrix.MatrixConfig
 import com.technicallyrural.junction.app.matrix.MatrixConfigRepository
+import com.technicallyrural.junction.app.service.MatrixSyncService
 import com.technicallyrural.junction.matrix.impl.TrixnityClientManager
 import com.technicallyrural.junction.matrix.impl.TrixnityMatrixBridge
 import com.technicallyrural.junction.matrix.impl.SimpleRoomMapper
@@ -165,6 +166,9 @@ class MatrixConfigActivity : AppCompatActivity() {
         // Update UI
         updateConnectionStatus(updatedConfig)
 
+        // Start/stop Matrix sync service based on enabled state
+        updateServiceState(updatedConfig)
+
         // If password was entered, show login prompt
         if (password.isNotBlank()) {
             showLoginPrompt(password)
@@ -252,6 +256,9 @@ class MatrixConfigActivity : AppCompatActivity() {
                             updateConnectionStatus(currentConfig)
                             binding.userIdInput.setText(result.userId)
                             updateUserIdVisibility()
+
+                            // Start sync service if enabled
+                            updateServiceState(authenticatedConfig)
 
                             // Trigger control room creation for testing
                             createControlRoomForTesting()
@@ -345,6 +352,9 @@ class MatrixConfigActivity : AppCompatActivity() {
                     // Clear password field
                     binding.passwordInput.setText("")
 
+                    // Start sync service if enabled
+                    updateServiceState(authenticatedConfig)
+
                     // Trigger control room creation for testing
                     createControlRoomForTesting()
                 }
@@ -403,6 +413,22 @@ class MatrixConfigActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to create control room", e)
             }
+        }
+    }
+
+    /**
+     * Start or stop Matrix sync service based on configuration.
+     */
+    private fun updateServiceState(config: MatrixConfig) {
+        if (config.enabled && config.isAuthenticated()) {
+            // Start sync service
+            Log.d(TAG, "Starting Matrix sync service")
+            MatrixSyncService.start(this)
+            Toast.makeText(this, "Matrix sync started", Toast.LENGTH_SHORT).show()
+        } else {
+            // Stop sync service
+            Log.d(TAG, "Stopping Matrix sync service")
+            MatrixSyncService.stop(this)
         }
     }
 
