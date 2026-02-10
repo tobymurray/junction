@@ -13,9 +13,12 @@ import androidx.core.app.NotificationCompat
 import com.technicallyrural.junction.app.R
 import com.technicallyrural.junction.app.matrix.MatrixConfigRepository
 import com.technicallyrural.junction.app.ui.MatrixConfigActivity
+import com.technicallyrural.junction.matrix.MatrixRegistry
 import com.technicallyrural.junction.matrix.impl.SimpleRoomMapper
 import com.technicallyrural.junction.matrix.impl.TrixnityClientManager
 import com.technicallyrural.junction.matrix.impl.TrixnityMatrixBridge
+import com.technicallyrural.junction.core.CoreSmsRegistry
+import com.technicallyrural.junction.core.transport.SendResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -129,6 +132,17 @@ class MatrixSyncService : Service() {
                     roomMapper = roomMapper
                 )
 
+                // Register bridge in MatrixRegistry for app-wide access
+                // Use bridge for presence service (it has updatePresence method)
+                val presenceService = BridgePresenceServiceAdapter(bridge)
+                MatrixRegistry.initialize(
+                    matrixBridge = bridge,
+                    roomMapper = roomMapper,
+                    presenceService = presenceService
+                )
+
+                Log.d(TAG, "MatrixRegistry initialized")
+
                 // Start sync
                 updateNotification("Connected to ${config.serverUrl}")
                 Log.d(TAG, "Starting Matrix sync...")
@@ -158,13 +172,34 @@ class MatrixSyncService : Service() {
                 try {
                     Log.d(TAG, "Received Matrix message: ${matrixMessage.body} from ${matrixMessage.sender}")
 
-                    // TODO: Bridge to SMS
-                    // 1. Extract phone number from room mapping
-                    // 2. Use SmsTransport to send SMS
-                    // 3. Handle send result
+                    // Get phone number from room mapping
+                    val phoneNumber = MatrixRegistry.roomMapper.getContactForRoom(matrixMessage.roomId)
+                    if (phoneNumber == null) {
+                        Log.w(TAG, "No phone mapping for room ${matrixMessage.roomId}")
+                        return@collect
+                    }
 
-                    // For now, just log
-                    Log.d(TAG, "Matrix → SMS bridge not yet implemented")
+                    Log.d(TAG, "Matrix → SMS: Sending to $phoneNumber")
+
+                    // Send SMS via CoreSmsRegistry
+                    if (!CoreSmsRegistry.isInitialized) {
+                        Log.e(TAG, "CoreSmsRegistry not initialized, cannot send SMS")
+                        return@collect
+                    }
+
+                    val result = CoreSmsRegistry.smsTransport.sendSms(
+                        destinationAddress = phoneNumber,
+                        message = matrixMessage.body
+                    )
+
+                    when (result) {
+                        is SendResult.Success -> {
+                            Log.d(TAG, "Matrix message successfully bridged to SMS: $phoneNumber")
+                        }
+                        is SendResult.Failure -> {
+                            Log.e(TAG, "Failed to send SMS: ${result.error}")
+                        }
+                    }
 
                 } catch (e: Exception) {
                     Log.e(TAG, "Error processing Matrix message", e)
@@ -209,7 +244,8 @@ class MatrixSyncService : Service() {
         scope.launch {
             try {
                 bridge.stopSync()
-                Log.d(TAG, "Matrix sync stopped")
+                MatrixRegistry.clear()
+                Log.d(TAG, "Matrix sync stopped, registry cleared")
             } catch (e: Exception) {
                 Log.e(TAG, "Error stopping sync", e)
             }
@@ -289,5 +325,46 @@ class MatrixSyncService : Service() {
             }
             context.startService(intent)
         }
+    }
+}
+
+/**
+ * Adapter that wraps MatrixBridge to provide MatrixPresenceService interface.
+ * Since MatrixBridge has updatePresence method, we delegate to it.
+ */
+private class BridgePresenceServiceAdapter(
+    private val bridge: com.technicallyrural.junction.matrix.MatrixBridge
+) : com.technicallyrural.junction.matrix.MatrixPresenceService {
+
+    override val deviceStatus: kotlinx.coroutines.flow.Flow<com.technicallyrural.junction.matrix.DeviceStatus>
+        get() = kotlinx.coroutines.flow.flowOf(
+            com.technicallyrural.junction.matrix.DeviceStatus(
+                dataConnected = false,
+                connectionType = com.technicallyrural.junction.matrix.ConnectionType.NONE,
+                cellSignal = 0,
+                wifiConnected = false,
+                lastUpdate = 0L
+            )
+        )
+
+    override suspend fun sendImmediateUpdate() {
+        // Delegate to bridge's updatePresence
+        bridge.updatePresence(dataConnected = true, cellSignal = 4)
+    }
+
+    override suspend fun getOrCreateControlRoom(): String? {
+        return bridge.getControlRoomId()
+    }
+
+    override fun isMonitoring(): Boolean {
+        return bridge.isSyncing()
+    }
+
+    override suspend fun startMonitoring() {
+        // No-op: monitoring is handled by sync service
+    }
+
+    override suspend fun stopMonitoring() {
+        // No-op: monitoring is handled by sync service
     }
 }
