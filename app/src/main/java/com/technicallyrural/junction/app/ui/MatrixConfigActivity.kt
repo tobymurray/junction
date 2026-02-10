@@ -98,6 +98,9 @@ class MatrixConfigActivity : AppCompatActivity() {
         currentConfig = repository.loadConfig()
         populateFields(currentConfig)
         updateConnectionStatus(currentConfig)
+
+        // Start sync service if Matrix is enabled and authenticated
+        updateServiceState(currentConfig)
     }
 
     private fun populateFields(config: MatrixConfig) {

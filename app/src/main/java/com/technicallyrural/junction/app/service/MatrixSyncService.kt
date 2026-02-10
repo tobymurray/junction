@@ -49,7 +49,7 @@ class MatrixSyncService : Service() {
     private var presenceJob: Job? = null
 
     private lateinit var clientManager: TrixnityClientManager
-    private lateinit var bridge: TrixnityMatrixBridge
+    private var bridge: TrixnityMatrixBridge? = null
     private lateinit var configRepository: MatrixConfigRepository
 
     override fun onCreate() {
@@ -126,17 +126,20 @@ class MatrixSyncService : Service() {
                     homeserverDomain = serverDomain
                 )
 
-                bridge = TrixnityMatrixBridge(
+                val matrixBridge = TrixnityMatrixBridge(
                     context = applicationContext,
                     clientManager = clientManager,
                     roomMapper = roomMapper
                 )
 
+                // Store bridge instance
+                bridge = matrixBridge
+
                 // Register bridge in MatrixRegistry for app-wide access
                 // Use bridge for presence service (it has updatePresence method)
-                val presenceService = BridgePresenceServiceAdapter(bridge)
+                val presenceService = BridgePresenceServiceAdapter(matrixBridge)
                 MatrixRegistry.initialize(
-                    matrixBridge = bridge,
+                    matrixBridge = matrixBridge,
                     roomMapper = roomMapper,
                     presenceService = presenceService
                 )
@@ -147,7 +150,7 @@ class MatrixSyncService : Service() {
                 updateNotification("Connected to ${config.serverUrl}")
                 Log.d(TAG, "Starting Matrix sync...")
 
-                bridge.startSync()
+                bridge?.startSync()
 
                 // Subscribe to incoming messages
                 subscribeToMatrixMessages()
@@ -167,8 +170,10 @@ class MatrixSyncService : Service() {
      * Subscribe to incoming Matrix messages and bridge to SMS.
      */
     private fun subscribeToMatrixMessages() {
+        val bridgeInstance = bridge ?: return
+
         scope.launch {
-            bridge.observeMatrixMessages().collect { matrixMessage ->
+            bridgeInstance.observeMatrixMessages().collect { matrixMessage ->
                 try {
                     Log.d(TAG, "Received Matrix message: ${matrixMessage.body} from ${matrixMessage.sender}")
 
@@ -212,6 +217,8 @@ class MatrixSyncService : Service() {
      * Send periodic presence updates to control room.
      */
     private fun startPresenceUpdates() {
+        val bridgeInstance = bridge ?: return
+
         presenceJob?.cancel()
 
         presenceJob = scope.launch {
@@ -221,7 +228,7 @@ class MatrixSyncService : Service() {
                     val dataConnected = true // Placeholder
                     val cellSignal = 4 // Placeholder (0-4 bars)
 
-                    bridge.updatePresence(dataConnected, cellSignal)
+                    bridgeInstance.updatePresence(dataConnected, cellSignal)
                     Log.d(TAG, "Sent presence update")
 
                 } catch (e: Exception) {
@@ -243,7 +250,7 @@ class MatrixSyncService : Service() {
 
         scope.launch {
             try {
-                bridge.stopSync()
+                bridge?.stopSync()
                 MatrixRegistry.clear()
                 Log.d(TAG, "Matrix sync stopped, registry cleared")
             } catch (e: Exception) {
