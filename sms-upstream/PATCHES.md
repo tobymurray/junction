@@ -319,16 +319,23 @@ See `sms-upstream/src/main/java/com/android/ex/chips/README.md` for detailed upd
 
 ### PATCH-016: Modern IME Inset Handling for Edge-to-Edge
 
-**Status:** ✅ Complete
+**Status:** ✅ Complete (Enhancement - not modifying existing AOSP code)
+**Type:** Feature Addition
 **Date:** 2026-02-10
-**Rationale:** Fix keyboard overlaying input field on Android 11+ with edge-to-edge enabled
+**Rationale:** Add edge-to-edge support and modern IME handling for Android 11+ (AOSP has no edge-to-edge)
 **Affected Devices:** All devices with API 30+ (especially GrapheneOS, Pixel devices on Android 14+)
 
-**Problem:**
+**Important Note:**
+- **This is NOT a patch to fix AOSP bugs** - it's a new feature addition
+- AOSP Messaging has NO edge-to-edge or WindowInsets handling code
+- Junction adds modern Android 15 edge-to-edge support that AOSP lacks
+- Validated against AOSP android-15.0.0_r36 (2026-02-10) - AOSP onCreate() has no inset code
+
+**Problem Being Solved:**
 - AppCompat 1.7.0+ automatically enables edge-to-edge on API 35 (Android 15)
-- The base activity's edge-to-edge fix consumed ALL window insets including IME (keyboard) insets
-- The manifest's `android:windowSoftInputMode="adjustResize"` doesn't work when IME insets are consumed at DecorView
-- Result: Keyboard overlays the message input field, user cannot see what they're typing
+- Without proper WindowInsets handling, keyboard overlays input field
+- The manifest's `android:windowSoftInputMode="adjustResize"` doesn't work with edge-to-edge
+- Result: User cannot see what they're typing
 
 **Files Modified:**
 
