@@ -11,6 +11,7 @@ Junction/
 ├── sms-upstream/     # Vendored AOSP Messaging (minimal patches)
 ├── core-sms/         # Adapter interfaces (SmsTransport, MessageStore, etc.)
 ├── core-matrix/      # Matrix bridge interfaces
+├── core-persistence/ # Room database for message mapping & deduplication
 ├── matrix-impl/      # Matrix bridge implementation (Trixnity SDK)
 ├── app/              # Main application (UI, Matrix bridge, receivers)
 └── docs/             # Architecture and update documentation
@@ -29,7 +30,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed design.
 - **Run on GrapheneOS** without system privileges
 - **Use only public Android SDK APIs** - no hidden APIs, no system signatures
 - **Easy upstream updates** - mechanical process with minimal merge pain
-- **Foundation for future Matrix bridge** integration
+- **Matrix bridge integration** - SMS ↔ Matrix bidirectional bridging (IN PROGRESS)
 
 ## Non-Goals
 
@@ -80,18 +81,59 @@ Defines interfaces that abstract SMS functionality:
 - No dependency on sms-upstream
 - Stable API that rarely changes
 
+### `core-matrix/` - Matrix Bridge Interfaces
+
+Defines interfaces for Matrix integration:
+- `MatrixBridge` - Send SMS to Matrix, observe Matrix messages
+- `MatrixRoomMapper` - Map phone numbers to Matrix room IDs
+- `MatrixPresenceService` - Send device status updates
+
+**Rules:**
+- Interfaces only, no Matrix SDK dependencies
+- Stable API for Matrix integration
+
+### `core-persistence/` - Database Persistence Layer
+
+Room database for crash-safe message bridging:
+- **BridgedMessageEntity** - Message mapping with deduplication
+- **MessageParticipantEntity** - Multi-participant tracking (group messages)
+- **RoomMappingEntity** - Conversation ↔ Matrix room mapping
+- **MmsMediaEntity** - MMS media upload/download tracking
+
+**Features:**
+- Conversation-aware architecture (supports same contact in multiple groups)
+- Crash-safe deduplication (survives app restarts)
+- Send status tracking (PENDING → SENT → CONFIRMED → FAILED)
+- Retry tracking foundation for WorkManager integration
+
+**Key Components:**
+- `MessageRepository` - High-level API for message bridging operations
+- `RoomMappingRepository` - Persistent conversation ↔ room mapping
+- `AospThreadIdExtractor` - Utility for extracting AOSP thread IDs
+
+### `matrix-impl/` - Matrix Bridge Implementation
+
+Trixnity SDK integration implementing core-matrix interfaces:
+- Real Matrix client initialization and sync
+- Room creation with canonical aliases
+- Message sending/receiving
+- Conversation-based room mapping (uses core-persistence)
+
+**Status:** Phase 0 complete - SMS ↔ Matrix text bridging functional
+
 ### `app/` - Main Application
 
 The actual Android application containing:
 - UI (Activities, Fragments)
-- BroadcastReceivers for SMS/MMS
-- Services for headless sending
+- BroadcastReceivers for SMS/MMS (uses core-persistence for deduplication)
+- Services for Matrix sync (uses core-persistence for state tracking)
 - Role/permission handling
-- Future: Matrix bridge
+- Matrix bridge orchestration
 
 **Rules:**
-- Depends only on core-sms interfaces
+- Depends only on core-sms and core-matrix interfaces
 - Never imports from com.android.messaging.* directly
+- Uses core-persistence for crash-safe message tracking
 
 ## Build Instructions
 
@@ -135,9 +177,10 @@ All permissions are public SDK permissions:
 
 ## Status
 
-- [x] Project structure created
+### Core SMS Application
+- [x] Project structure created (6 modules)
 - [x] Gradle multi-module setup
-- [x] Core interfaces defined (5 Kotlin interfaces in `core-sms/`)
+- [x] Core interfaces defined (core-sms, core-matrix)
 - [x] App manifest with SMS app declarations
 - [x] AOSP source vendored (commit de315b76, 501 Java files)
 - [x] Hidden API patches applied (14 patches documented in PATCHES.md)
@@ -149,13 +192,27 @@ All permissions are public SDK permissions:
 - [x] Core-sms adapters wired via dependency injection (`CoreSmsRegistry`)
 - [x] App module decoupled from sms-upstream (no direct `com.android.messaging.*` imports)
 - [x] Unit test coverage (132 tests: contract tests + adapter tests)
+
+### Matrix Bridge (NEW - 2026-02-11)
+- [x] Matrix interfaces defined (core-matrix)
+- [x] Trixnity SDK 5.1.0 integrated (matrix-impl)
+- [x] Matrix client initialization and sync
+- [x] SMS → Matrix text bridging (Phase 0)
+- [x] Matrix → SMS text bridging (Phase 0)
+- [x] Persistence layer (Room database)
+- [x] Crash-safe deduplication (both directions)
+- [x] Conversation-aware architecture (group message support)
+- [x] Send status tracking (PENDING → CONFIRMED → FAILED)
+- [ ] MMS media upload/download (Phase 1)
+- [ ] WorkManager retry logic (Phase 1)
 - [ ] Integration test coverage
 - [ ] GrapheneOS compatibility verified
-- [ ] Matrix bridge foundation
+
+**Production Readiness: ~70%** (see `docs/PRODUCTION_READINESS_AUDIT.md` for details)
 
 ## Status Evaluation & Plan
 
-*Last evaluated: 2026-02-03*
+*Last evaluated: 2026-02-11*
 
 ### Current Accuracy Assessment
 
@@ -173,16 +230,17 @@ All permissions are public SDK permissions:
 
 ### Verified Current State
 
-Based on codebase inspection (2026-02-03):
+Based on codebase inspection (2026-02-11):
 
-- **Build System:** Modernized to AGP 9.0.0, Gradle 9.3.1, Kotlin 2.3.0, compileSdk 36
+- **Build System:** AGP 9.0.0, Gradle 9.3.1, Kotlin 2.3.10, compileSdk 36
 - **AOSP Source:** 455 files in `com.android.messaging` package, fully vendored
 - **Stub Libraries:** 32 files across 5 packages (rastermill, chips, photo, contacts, vcard)
 - **Patches:** 14 documented in `sms-upstream/PATCHES.md` with clear rationale and file lists
 - **App Package:** `com.technicallyrural.junction` (renamed from `com.example.messaging`)
 - **Content Providers:** Authorities prefixed with `com.technicallyrural.junction.datamodel.*`
-- **APK:** Debug build exists and is recent (Feb 3, 2026)
-- **Core Interfaces:** Defined but no implementations wired between modules
+- **Matrix Integration:** Trixnity SDK 5.1.0, Phase 0 complete (text bridging functional)
+- **Persistence Layer:** Room database v1 with 4 entities (conversation-aware, crash-safe)
+- **Architecture:** Clean separation - zero direct AOSP imports in app module
 
 ### Remaining Work (Actionable)
 

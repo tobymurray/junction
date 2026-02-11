@@ -40,6 +40,12 @@ rootProject.name = "Junction"
 //                  - Uses Trixnity SDK
 //                  - Room database for mapping persistence
 //
+// core-persistence/ → Database persistence layer (android-library)
+//                  - Room database for message mapping and deduplication
+//                  - Conversation-aware persistence (supports group messages)
+//                  - Multi-participant tracking for group MMS/SMS
+//                  - Used by app and matrix-impl modules
+//
 // app/           → Main application (android-application)
 //                  - UI, Matrix bridge orchestration, GrapheneOS integration
 //                  - Depends ONLY on core-sms and core-matrix interfaces
@@ -50,5 +56,6 @@ rootProject.name = "Junction"
 include(":sms-upstream")
 include(":core-sms")
 include(":core-matrix")
+include(":core-persistence")
 include(":matrix-impl")
 include(":app")

@@ -55,6 +55,9 @@ dependencies {
     // Core Matrix interfaces
     implementation(project(":core-matrix"))
 
+    // Persistence layer (for room mapping)
+    implementation(project(":core-persistence"))
+
     // ========================================================================
     // Matrix SDK - Trixnity 5.x
     // Note: Crypto driver is now required (using Vodozemac)

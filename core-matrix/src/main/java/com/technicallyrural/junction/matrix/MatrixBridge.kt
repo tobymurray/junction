@@ -116,7 +116,10 @@ sealed class ConnectionState {
  */
 sealed class MatrixSendResult {
     /** Message sent successfully */
-    data class Success(val eventId: String) : MatrixSendResult()
+    data class Success(
+        val eventId: String,
+        val roomId: String? = null
+    ) : MatrixSendResult()
 
     /** Message send failed */
     data class Failure(val error: MatrixSendError) : MatrixSendResult()

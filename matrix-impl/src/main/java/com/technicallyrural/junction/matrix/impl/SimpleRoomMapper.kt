@@ -1,9 +1,11 @@
 package com.technicallyrural.junction.matrix.impl
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.telephony.PhoneNumberUtils
+import android.util.Log
 import com.technicallyrural.junction.matrix.*
+import com.technicallyrural.junction.persistence.repository.RoomMappingRepository
+import com.technicallyrural.junction.persistence.util.AospThreadIdExtractor
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import de.connect2x.trixnity.core.model.RoomAliasId
@@ -11,17 +13,15 @@ import de.connect2x.trixnity.core.model.RoomId
 import java.util.Locale
 
 /**
- * Implementation of MatrixRoomMapper using SharedPreferences + Trixnity.
+ * Implementation of MatrixRoomMapper using Room database + Trixnity.
  *
- * Uses SharedPreferences for local mapping cache with Trixnity for:
- * - Room alias resolution
- * - Room creation with canonical aliases
- * - Room management
+ * Uses conversation-based mapping (not phone-based) to support:
+ * - Same contact in multiple conversations (1:1 + different groups)
+ * - Persistent storage across app restarts
  *
- * Mappings stored with keys:
- * - "phone_to_room_<e164>" -> room ID
- * - "room_to_phone_<roomId>" -> E.164 phone number
- * - "room_alias_<e164>" -> room alias
+ * Mappings:
+ * - Conversation ID (AOSP thread_id) → Matrix room ID
+ * - Bidirectional lookup for bridging in both directions
  */
 class SimpleRoomMapper(
     private val context: Context,
@@ -29,12 +29,12 @@ class SimpleRoomMapper(
     private val homeserverDomain: String
 ) : MatrixRoomMapper {
 
-    private val prefs: SharedPreferences = context.getSharedPreferences(
-        "matrix_room_mappings",
-        Context.MODE_PRIVATE
-    )
-
+    private val roomRepo = RoomMappingRepository.getInstance(context)
     private val mutex = Mutex()
+
+    companion object {
+        private const val TAG = "SimpleRoomMapper"
+    }
 
     override suspend fun getRoomForContact(phoneNumber: String): String? = mutex.withLock {
         val client = clientManager.client ?: return null
@@ -42,49 +42,65 @@ class SimpleRoomMapper(
         // 1. Normalize phone number to E.164
         val normalized = normalizeToE164(phoneNumber) ?: return null
 
-        // 2. Check local cache
-        val cached = prefs.getString(phoneKey(normalized), null)
+        // 2. Get conversation ID from AOSP thread system
+        val conversationId = AospThreadIdExtractor.getThreadIdForAddress(context, normalized)
+
+        // 3. Check database for existing mapping
+        val cached = roomRepo.getRoomForConversation(conversationId)
         if (cached != null) {
+            Log.d(TAG, "Room found in database for conversation $conversationId: $cached")
             return cached
         }
 
-        // 3. Try canonical room alias resolution
+        // 4. Try canonical room alias resolution
         val alias = buildRoomAlias(normalized)
         val roomByAlias = tryResolveAlias(alias)
         if (roomByAlias != null) {
-            saveMapping(normalized, roomByAlias, alias)
+            // Save mapping
+            roomRepo.setMapping(
+                conversationId = conversationId,
+                participants = listOf(normalized),
+                roomId = roomByAlias,
+                alias = alias,
+                isGroup = false
+            )
             return roomByAlias
         }
 
-        // 4. Create new DM room with alias
-        return createRoomForContact(normalized, alias)
+        // 5. Create new DM room with alias
+        return createRoomForContact(conversationId, normalized, alias)
     }
 
     override suspend fun getContactForRoom(roomId: String): String? {
-        return prefs.getString(roomKey(roomId), null)
+        // Get conversation ID from room mapping
+        val conversationId = roomRepo.getConversationForRoom(roomId) ?: return null
+
+        // Get participants for this conversation
+        val participants = roomRepo.getParticipants(conversationId)
+
+        // Return first participant (for 1:1 conversations)
+        // TODO: Handle group conversations properly
+        return participants?.firstOrNull()
     }
 
     override suspend fun getAllMappings(): List<RoomMapping> = mutex.withLock {
         val mappings = mutableListOf<RoomMapping>()
-        val allPrefs = prefs.all
+        val allMappings = roomRepo.getAllMappings()
 
-        for ((key, value) in allPrefs) {
-            if (key.startsWith("phone_to_room_")) {
-                val phone = key.removePrefix("phone_to_room_")
-                val roomId = value as? String ?: continue
-                val alias = prefs.getString(aliasKey(phone), null)
+        for (mapping in allMappings) {
+            val participants = roomRepo.getParticipants(mapping.conversationId)
+            val phoneNumber = participants?.firstOrNull() ?: continue
 
-                mappings.add(
-                    RoomMapping(
-                        phoneNumber = phone,
-                        roomId = roomId,
-                        roomAlias = alias,
-                        displayName = null,
-                        createdAt = 0L,
-                        lastSynced = 0L
-                    )
+            mappings.add(
+                RoomMapping(
+                    phoneNumber = phoneNumber,
+                    roomId = mapping.matrixRoomId,
+                    roomAlias = mapping.matrixAlias,
+                    displayName = null,
+                    createdAt = mapping.createdAt,
+                    lastSynced = mapping.lastUsed
                 )
-            }
+            )
         }
 
         return mappings
@@ -96,44 +112,31 @@ class SimpleRoomMapper(
         roomAlias: String?
     ): Unit = mutex.withLock {
         val normalized = normalizeToE164(phoneNumber) ?: return@withLock
-        saveMapping(normalized, roomId, roomAlias)
+        val conversationId = AospThreadIdExtractor.getThreadIdForAddress(context, normalized)
+
+        roomRepo.setMapping(
+            conversationId = conversationId,
+            participants = listOf(normalized),
+            roomId = roomId,
+            alias = roomAlias,
+            isGroup = false
+        )
     }
 
     override suspend fun deleteMapping(phoneNumber: String): Boolean = mutex.withLock {
         val normalized = normalizeToE164(phoneNumber) ?: return false
-        val roomId = prefs.getString(phoneKey(normalized), null) ?: return false
+        val conversationId = AospThreadIdExtractor.getThreadIdForAddress(context, normalized)
 
-        prefs.edit()
-            .remove(phoneKey(normalized))
-            .remove(roomKey(roomId))
-            .remove(aliasKey(normalized))
-            .apply()
-
+        roomRepo.removeMapping(conversationId)
         return true
     }
 
     override suspend fun syncMappings() {
-        // No-op for SharedPreferences implementation
-        // In Room version, this would verify rooms still exist
+        // TODO: Verify rooms still exist and clean up stale mappings
     }
 
     override suspend fun clearAllMappings() = mutex.withLock {
-        prefs.edit().clear().apply()
-    }
-
-    /**
-     * Save a phone→room mapping to SharedPreferences.
-     */
-    private fun saveMapping(phoneE164: String, roomId: String, roomAlias: String?) {
-        prefs.edit()
-            .putString(phoneKey(phoneE164), roomId)
-            .putString(roomKey(roomId), phoneE164)
-            .apply {
-                if (roomAlias != null) {
-                    putString(aliasKey(phoneE164), roomAlias)
-                }
-            }
-            .apply()
+        roomRepo.clearAllMappings()
     }
 
     /**
@@ -157,6 +160,7 @@ class SimpleRoomMapper(
      * Create a new DM room for a contact using Trixnity API.
      */
     private suspend fun createRoomForContact(
+        conversationId: String,
         phoneE164: String,
         alias: String
     ): String? {
@@ -177,13 +181,21 @@ class SimpleRoomMapper(
             }
 
             if (roomId != null) {
-                saveMapping(phoneE164, roomId.full, alias)
+                // Save mapping
+                roomRepo.setMapping(
+                    conversationId = conversationId,
+                    participants = listOf(phoneE164),
+                    roomId = roomId.full,
+                    alias = alias,
+                    isGroup = false
+                )
+                Log.d(TAG, "Created room for conversation $conversationId: ${roomId.full}")
                 roomId.full
             } else {
                 null
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to create room for conversation $conversationId", e)
             null
         }
     }
@@ -207,9 +219,4 @@ class SimpleRoomMapper(
         val formatted = PhoneNumberUtils.formatNumberToE164(phoneNumber, Locale.getDefault().country)
         return formatted?.takeIf { it.startsWith("+") }
     }
-
-    // SharedPreferences key builders
-    private fun phoneKey(phoneE164: String) = "phone_to_room_$phoneE164"
-    private fun roomKey(roomId: String) = "room_to_phone_${roomId.replace(":", "_")}"
-    private fun aliasKey(phoneE164: String) = "room_alias_$phoneE164"
 }

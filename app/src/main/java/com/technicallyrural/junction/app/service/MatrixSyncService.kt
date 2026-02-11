@@ -20,6 +20,9 @@ import com.technicallyrural.junction.matrix.impl.TrixnityClientManagerSingleton
 import com.technicallyrural.junction.matrix.impl.TrixnityMatrixBridge
 import com.technicallyrural.junction.core.CoreSmsRegistry
 import com.technicallyrural.junction.core.transport.SendResult
+import com.technicallyrural.junction.persistence.repository.MessageRepository
+import com.technicallyrural.junction.persistence.repository.RoomMappingRepository
+import com.technicallyrural.junction.persistence.util.AospThreadIdExtractor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,7 +31,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.Collections
 
 /**
  * Foreground service that maintains Matrix sync connection.
@@ -58,28 +60,9 @@ class MatrixSyncService : Service() {
         private const val TAG = "MatrixSyncService"
         private const val CHANNEL_ID = "matrix_sync"
         private const val NOTIFICATION_ID = 1001
-        private const val MAX_CACHE_SIZE = 1000
 
         const val ACTION_START_SYNC = "com.technicallyrural.junction.START_MATRIX_SYNC"
         const val ACTION_STOP_SYNC = "com.technicallyrural.junction.STOP_MATRIX_SYNC"
-
-        /**
-         * Deduplication cache for Matrix → SMS forwarding.
-         * Stores Matrix event IDs to prevent duplicate SMS sends when
-         * Matrix replays events after reconnect or sync loop restart.
-         *
-         * Uses synchronized LRU map with automatic eviction after 1000 entries.
-         * Thread-safe for concurrent access.
-         */
-        private val processedEventIds: MutableSet<String> = Collections.newSetFromMap(
-            Collections.synchronizedMap(
-                object : LinkedHashMap<String, Boolean>(MAX_CACHE_SIZE + 1, 0.75f, true) {
-                    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Boolean>?): Boolean {
-                        return size > MAX_CACHE_SIZE
-                    }
-                }
-            )
-        )
 
         /**
          * Start Matrix sync service.
@@ -217,7 +200,7 @@ class MatrixSyncService : Service() {
     }
 
     /**
-     * Subscribe to incoming Matrix messages and bridge to SMS.
+     * Subscribe to incoming Matrix messages and bridge to SMS with persistent deduplication.
      */
     private fun subscribeToMatrixMessages() {
         val bridgeInstance = bridge ?: return
@@ -225,52 +208,88 @@ class MatrixSyncService : Service() {
         scope.launch {
             bridgeInstance.observeMatrixMessages().collect { matrixMessage ->
                 try {
-                    // Deduplication check: Skip if we've already processed this event
-                    if (processedEventIds.contains(matrixMessage.eventId)) {
+                    Log.d(TAG, "Matrix message from ${matrixMessage.sender}, eventId=${matrixMessage.eventId}")
+
+                    // Get conversation ID from room mapping
+                    val roomRepo = RoomMappingRepository.getInstance(applicationContext)
+                    val conversationId = roomRepo.getConversationForRoom(matrixMessage.roomId)
+                    if (conversationId == null) {
+                        Log.w(TAG, "No conversation mapping for room ${matrixMessage.roomId}")
+                        return@collect
+                    }
+
+                    // Get participants for this conversation
+                    val participants = roomRepo.getParticipants(conversationId)
+                    if (participants.isNullOrEmpty()) {
+                        Log.w(TAG, "No participants for conversation $conversationId")
+                        return@collect
+                    }
+
+                    // Get our phone number
+                    val ownNumber = AospThreadIdExtractor.getOwnPhoneNumber(applicationContext) ?: "unknown"
+
+                    // Initialize repository
+                    val messageRepo = MessageRepository.getInstance(applicationContext)
+
+                    // Record send attempt (with deduplication by event ID)
+                    val record = messageRepo.recordMatrixToSmsSend(
+                        matrixEventId = matrixMessage.eventId,
+                        matrixRoomId = matrixMessage.roomId,
+                        conversationId = conversationId,
+                        senderAddress = matrixMessage.sender,
+                        recipientAddresses = participants.filter { it != ownNumber },
+                        body = matrixMessage.body,
+                        timestamp = matrixMessage.timestamp,
+                        isGroup = participants.size > 1
+                    )
+
+                    if (record == null) {
                         Log.w(TAG, "Duplicate Matrix event detected (id=${matrixMessage.eventId}), skipping SMS send")
                         return@collect
                     }
 
-                    Log.d(TAG, "Matrix message from ${matrixMessage.sender}, eventId=${matrixMessage.eventId}")
+                    // For now, send to first participant (1:1 SMS)
+                    // TODO: Group SMS support in Phase 1
+                    val recipient = participants.firstOrNull() ?: return@collect
 
-                    // Add to cache before processing to prevent race conditions
-                    processedEventIds.add(matrixMessage.eventId)
-
-                    // Get phone number from room mapping
-                    val phoneNumber = MatrixRegistry.roomMapper.getContactForRoom(matrixMessage.roomId)
-                    if (phoneNumber == null) {
-                        Log.w(TAG, "No phone mapping for room ${matrixMessage.roomId}")
-                        return@collect
-                    }
-
-                    Log.d(TAG, "Matrix → SMS: $phoneNumber (eventId=${matrixMessage.eventId})")
+                    Log.d(TAG, "Matrix → SMS: $recipient (eventId=${matrixMessage.eventId})")
 
                     // Send SMS via CoreSmsRegistry
                     if (!CoreSmsRegistry.isInitialized) {
                         Log.e(TAG, "CoreSmsRegistry not initialized, cannot send SMS")
+                        messageRepo.recordSmsSendFailure(
+                            matrixEventId = matrixMessage.eventId,
+                            failureReason = "CoreSmsRegistry not initialized"
+                        )
                         return@collect
                     }
 
                     val result = CoreSmsRegistry.smsTransport.sendSms(
-                        destinationAddress = phoneNumber,
+                        destinationAddress = recipient,
                         message = matrixMessage.body
                     )
 
                     when (result) {
                         is SendResult.Success -> {
-                            Log.d(TAG, "Matrix message bridged to SMS: $phoneNumber, eventId=${matrixMessage.eventId}")
+                            Log.d(TAG, "Matrix message bridged to SMS: $recipient, eventId=${matrixMessage.eventId}")
+                            // Confirm send
+                            messageRepo.confirmSmsSend(
+                                matrixEventId = matrixMessage.eventId,
+                                smsMessageId = result.messageId ?: 0L
+                            )
                         }
                         is SendResult.Failure -> {
                             Log.e(TAG, "Failed to send SMS for eventId=${matrixMessage.eventId}: ${result.error}")
-                            // Note: We keep eventId in cache even on failure to prevent
-                            // infinite retry loops. Retry logic should be handled by
-                            // WorkManager (Phase 1 work).
+                            // Record failure
+                            messageRepo.recordSmsSendFailure(
+                                matrixEventId = matrixMessage.eventId,
+                                failureReason = result.error.name
+                            )
                         }
                     }
 
                 } catch (e: Exception) {
                     Log.e(TAG, "Error processing Matrix message eventId=${matrixMessage.eventId}", e)
-                    // Keep eventId in cache even on exception to prevent retry storms
                 }
             }
         }

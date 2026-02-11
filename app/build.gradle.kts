@@ -83,6 +83,9 @@ dependencies {
     implementation(project(":core-matrix"))
     implementation(project(":matrix-impl"))
 
+    // Persistence layer (Room database for message mapping)
+    implementation(project(":core-persistence"))
+
     // ========================================================================
     // AndroidX
     // ========================================================================

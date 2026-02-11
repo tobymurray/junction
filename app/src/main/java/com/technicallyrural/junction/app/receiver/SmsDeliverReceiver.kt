@@ -9,25 +9,25 @@ import com.technicallyrural.junction.app.matrix.MatrixConfigRepository
 import com.technicallyrural.junction.matrix.MatrixRegistry
 import com.technicallyrural.junction.matrix.MatrixSendResult
 import com.android.messaging.adapter.SmsStorageAdapter
+import com.technicallyrural.junction.persistence.repository.MessageRepository
+import com.technicallyrural.junction.persistence.util.AospThreadIdExtractor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.security.MessageDigest
-import java.util.Collections
 
 /**
  * Receives SMS_DELIVER broadcasts when this app is the default SMS app.
  *
  * This receiver handles incoming SMS and:
  * 1. Forwards to AOSP storage via SmsStorageAdapter (always)
- * 2. Forwards to Matrix bridge (if enabled)
+ * 2. Forwards to Matrix bridge (if enabled, with persistent deduplication)
  *
  * Architecture:
  * - Replaces AOSP's SmsDeliverReceiver (which is disabled in manifest)
  * - Uses SmsStorageAdapter to maintain AOSP storage/UI functionality
+ * - Uses MessageRepository for crash-safe deduplication
  * - Uses core-matrix interfaces for Matrix bridging
- * - Normal SMS functionality works independently of Matrix
  */
 class SmsDeliverReceiver : BroadcastReceiver() {
 
@@ -35,37 +35,6 @@ class SmsDeliverReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "SmsDeliverReceiver"
-        private const val MAX_CACHE_SIZE = 1000
-
-        /**
-         * Deduplication cache for SMS → Matrix forwarding.
-         * Stores message IDs (hash of timestamp + address + body) to prevent
-         * duplicate forwarding on app crash/restart or system redelivery.
-         *
-         * Uses synchronized LRU map with automatic eviction after 1000 entries.
-         * Thread-safe for concurrent access from multiple BroadcastReceiver instances.
-         */
-        private val forwardedMessageIds: MutableSet<String> = Collections.newSetFromMap(
-            Collections.synchronizedMap(
-                object : LinkedHashMap<String, Boolean>(MAX_CACHE_SIZE + 1, 0.75f, true) {
-                    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Boolean>?): Boolean {
-                        return size > MAX_CACHE_SIZE
-                    }
-                }
-            )
-        )
-
-        /**
-         * Generate unique message ID for deduplication.
-         * Uses SHA-256 hash of (timestamp + address + body) to create
-         * deterministic ID that survives app restarts for same message.
-         */
-        private fun generateMessageId(timestamp: Long, address: String, body: String): String {
-            val input = "$timestamp:$address:$body"
-            val digest = MessageDigest.getInstance("SHA-256")
-            val hash = digest.digest(input.toByteArray())
-            return hash.joinToString("") { "%02x".format(it) }.substring(0, 16)
-        }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -93,22 +62,10 @@ class SmsDeliverReceiver : BroadcastReceiver() {
                 val body = smsMessage.messageBody ?: return@forEach
                 val timestamp = smsMessage.timestampMillis
 
-                // Generate message ID for deduplication
-                val messageId = generateMessageId(timestamp, sender, body)
-
-                // Check deduplication cache
-                if (forwardedMessageIds.contains(messageId)) {
-                    Log.w(TAG, "Duplicate SMS detected (id=$messageId), skipping Matrix forward")
-                    return@forEach
-                }
-
-                Log.d(TAG, "SMS from $sender, body length: ${body.length}, id=$messageId")
-
-                // Add to cache before forwarding to prevent race conditions
-                forwardedMessageIds.add(messageId)
+                Log.d(TAG, "SMS from $sender, body length: ${body.length}")
 
                 // Forward to Matrix if enabled
-                forwardToMatrix(context, sender, body, timestamp, messageId)
+                forwardToMatrix(context, sender, body, timestamp)
             }
 
         } catch (e: Exception) {
@@ -117,16 +74,13 @@ class SmsDeliverReceiver : BroadcastReceiver() {
     }
 
     /**
-     * Forward incoming SMS to Matrix bridge.
-     *
-     * @param messageId Unique message ID for logging/tracking
+     * Forward incoming SMS to Matrix bridge with persistent deduplication.
      */
     private fun forwardToMatrix(
         context: Context,
         sender: String,
         body: String,
-        timestamp: Long,
-        messageId: String
+        timestamp: Long
     ) {
         scope.launch {
             try {
@@ -143,7 +97,32 @@ class SmsDeliverReceiver : BroadcastReceiver() {
                     return@launch
                 }
 
-                Log.d(TAG, "SMS → Matrix: $sender (id=$messageId)")
+                // Get conversation ID from AOSP thread system
+                val conversationId = AospThreadIdExtractor.getThreadIdForAddress(context, sender)
+
+                // Get our phone number (recipient)
+                val ownNumber = AospThreadIdExtractor.getOwnPhoneNumber(context) ?: "unknown"
+
+                // Initialize repository
+                val messageRepo = MessageRepository.getInstance(context)
+
+                // Record send attempt (with deduplication)
+                val record = messageRepo.recordSmsToMatrixSend(
+                    conversationId = conversationId,
+                    senderAddress = sender,
+                    recipientAddresses = listOf(ownNumber),
+                    body = body,
+                    timestamp = timestamp,
+                    isGroup = false,
+                    smsMessageId = null
+                )
+
+                if (record == null) {
+                    Log.w(TAG, "Duplicate SMS detected, skipping Matrix forward")
+                    return@launch
+                }
+
+                Log.d(TAG, "SMS → Matrix: $sender (dedupKey=${record.dedupKey})")
 
                 // Send to Matrix via registry
                 val result = MatrixRegistry.matrixBridge.sendToMatrix(
@@ -155,19 +134,26 @@ class SmsDeliverReceiver : BroadcastReceiver() {
 
                 when (result) {
                     is MatrixSendResult.Success -> {
-                        Log.d(TAG, "SMS forwarded to Matrix: eventId=${result.eventId}, messageId=$messageId")
+                        Log.d(TAG, "SMS forwarded to Matrix: eventId=${result.eventId}")
+                        // Confirm send
+                        messageRepo.confirmMatrixSend(
+                            dedupKey = record.dedupKey,
+                            matrixEventId = result.eventId,
+                            matrixRoomId = result.roomId ?: ""
+                        )
                     }
                     is MatrixSendResult.Failure -> {
-                        Log.e(TAG, "Matrix send failed for messageId=$messageId: ${result.error}")
-                        // Note: We keep messageId in cache even on failure to prevent
-                        // infinite retry loops. Retry logic should be handled by
-                        // WorkManager (Phase 1 work).
+                        Log.e(TAG, "Matrix send failed: ${result.error}")
+                        // Record failure
+                        messageRepo.recordMatrixSendFailure(
+                            dedupKey = record.dedupKey,
+                            failureReason = result.error.name
+                        )
                     }
                 }
 
             } catch (e: Exception) {
-                Log.e(TAG, "Error forwarding SMS to Matrix (messageId=$messageId)", e)
-                // Keep messageId in cache even on exception to prevent retry storms
+                Log.e(TAG, "Error forwarding SMS to Matrix", e)
             }
         }
     }

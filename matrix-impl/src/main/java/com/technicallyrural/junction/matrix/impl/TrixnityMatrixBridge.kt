@@ -91,7 +91,10 @@ class TrixnityMatrixBridge(
                 text(messageBody)
             }
 
-            MatrixSendResult.Success(transactionId)
+            MatrixSendResult.Success(
+                eventId = transactionId,
+                roomId = roomIdStr
+            )
         } catch (e: Exception) {
             e.printStackTrace()
             MatrixSendResult.Failure(MatrixSendError.SEND_FAILED)
