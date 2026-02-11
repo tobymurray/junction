@@ -69,22 +69,30 @@
 ### 🔴 Priority 1: Critical Functionality Gaps
 
 #### 1.1 MMS Functionality Verification
-**Status:** Unknown (not tested)
-**Effort:** 2-4 hours (manual testing)
+**Status:** 🟡 Partially tested - BLOCKED by cellular connectivity
+**Effort:** 2-4 hours (manual testing) - 0.5 hours completed
 **Risk:** High (MMS is core SMS app functionality)
 
 **Tasks:**
-- [ ] Test MMS send with image attachment
+- [x] Add missing storage permissions (READ_MEDIA_*, CAMERA)
+- [x] Create comprehensive MMS testing guide
+- [x] Test MMS send with image attachment (BLOCKED - no cellular)
 - [ ] Test MMS send with video attachment
 - [ ] Test MMS receive with media
 - [ ] Test MMS group messaging
 - [ ] Document any MMS limitations or bugs
 - [ ] Fix MMS issues if found
 
+**Progress:**
+- ✅ Fixed critical bug: Missing storage permissions in manifest
+- ✅ Created MMS_TESTING_GUIDE.md with 8 test cases
+- 🟡 Initial test blocked: Device on Wi-Fi only, no cellular signal
+- 📋 Root cause identified: MMS requires cellular data, device shows OUT_OF_SERVICE
+
 **Rationale:** MMS is essential for a production SMS app. AOSP code is present but untested in Junction.
 
-**Blockers:** None
-**Testing:** Manual testing on real device with real carrier MMS
+**Blockers:** Requires cellular network connection (currently Wi-Fi only)
+**Testing:** Resume manual testing when cellular signal available
 
 ---
 
