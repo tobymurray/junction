@@ -193,7 +193,7 @@ Do NOT set `fitsSystemWindows="true"` in both theme AND layouts—causes double-
 ### In `matrix-impl/`
 - Trixnity SDK v4.22.7 integration (see `TRIXNITY_INTEGRATION.md`)
 - Stub implementations currently compile but need real SDK calls
-- Room mapping storage via SharedPreferences (Room database blocked by KSP incompatibility)
+- Room mapping storage via SharedPreferences (Room database available but not yet implemented)
 - Authentication, sync loop, message sending/receiving
 - E.164 phone number normalization
 
@@ -222,12 +222,14 @@ See `docs/UPSTREAM_UPDATE_GUIDE.md` for detailed step-by-step process.
 
 ### Current Status
 - ✅ Architecture complete, all interfaces defined
-- ✅ Stub implementations compile and demonstrate data flow
-- ⚠️ Requires Trixnity SDK integration (v4.22.7+)
-- ⚠️ Room database blocked by KSP incompatibility (using SharedPreferences for MVP)
+- ✅ Trixnity SDK 5.1.0 fully integrated
+- ✅ Real implementations for login, sync, messaging, and room management
+- ℹ️ Using SharedPreferences for room mappings (Room database now available with KSP 2.3.5)
 
-### Trixnity SDK Integration Roadmap
-See `matrix-impl/TRIXNITY_INTEGRATION.md` for complete implementation checklist:
+### Trixnity SDK Integration Status
+**Version:** 5.1.0 (migrated from 4.22.7 on 2026-02-10)
+
+All core functionality implemented:
 1. Initialize MatrixClient from stored credentials or password login
 2. Manage sync loop in background service
 3. Send SMS messages to Matrix rooms (auto-create DM rooms with aliases)
@@ -296,10 +298,12 @@ See `matrix-impl/TRIXNITY_INTEGRATION.md` for complete implementation checklist:
 ### Gradle Configuration Warnings
 AGP 9.0 includes built-in Kotlin support. Current build.gradle.kts files apply `kotlin-android` plugin explicitly for clarity and parcelize support, causing deprecation warnings. This is intentional pending future cleanup.
 
-### KSP + Kotlin 2.3.10 Incompatibility
-Room database in `matrix-impl/` cannot be compiled until KSP 2.3.x is released. Workaround: SharedPreferences for room mapping (acceptable for < 100 contacts).
+### Room Database Now Available ✅
+~~Room database in `matrix-impl/` cannot be compiled until KSP 2.3.x is released.~~
 
-Preserved schema in `matrix-impl/db.TODO/` for future migration.
+**UPDATE (2026-02-10):** KSP 2.3.5 is now compatible with Kotlin 2.3.10 and Room 2.8.4. Room database can now be used instead of SharedPreferences.
+
+**Current Implementation:** SharedPreferences for room mapping (acceptable for < 100 contacts, but Room migration is now possible for better performance and reliability).
 
 ### ActionBarOverlayLayout + Edge-to-Edge
 On API 35, `setDecorFitsSystemWindows(true)` is a no-op. Manual inset handling required in `BugleActionBarActivity`. Do not set `fitsSystemWindows="true"` in both theme and layouts.
@@ -319,7 +323,7 @@ On API 35, `setDecorFitsSystemWindows(true)` is a no-op. Manual inset handling r
 | AGP | 9.0.0 |
 | Gradle | 9.3.1 |
 | Kotlin | 2.3.10 |
-| Trixnity | 4.22.7 (SDK not yet integrated) |
+| Trixnity | 5.1.0 (fully integrated) |
 | AOSP Source | commit `de315b76` (2026-02-01) |
 
 ## Documentation

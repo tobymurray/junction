@@ -50,6 +50,19 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
 
+    <!-- Storage permissions for MMS attachments (images, videos, audio) -->
+    <!-- Android 13+ (API 33+) granular media permissions -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+
+    <!-- Android 10-12 (API 29-32) legacy storage permission -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Camera permission for taking photos directly (optional, can use external camera app) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
     <!-- ====================================================================
          NOTIFICATIONS & FOREGROUND SERVICE
          ==================================================================== -->
