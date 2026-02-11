@@ -9,11 +9,14 @@ Every change must be documented here with rationale.
 When updating upstream, apply patches in this order:
 
 1. Build system patches (Android.bp → Gradle)
-2. Stub library additions
-3. Hidden API removals
-4. R.id switch statement conversions
-5. Resource conflict resolution
-6. Adapter interface wiring
+2. Stub library additions (PATCH-002 through PATCH-005)
+3. R.id switch statement conversions (PATCH-006)
+4. Resource conflict resolution (PATCH-007, PATCH-008)
+5. Code modifications (PATCH-009 through PATCH-013)
+6. Full library vendoring (PATCH-014)
+7. Enhancements (PATCH-015)
+
+**Total Patches:** 15 (PATCH-003 removed 2026-02-10, superseded by PATCH-014)
 
 ---
 
@@ -45,22 +48,7 @@ When updating upstream, apply patches in this order:
 
 **Future Work:** Replace with Glide or android-gif-drawable for animated images.
 
-### PATCH-003: Stub Library - com.android.ex.chips
-
-**Status:** ✅ Complete → ⚠️ REPLACED by PATCH-015 (2026-02-08)
-**Rationale:** AOSP chips library not available as public dependency
-**Files Added (ORIGINAL STUBS - NOW REPLACED):**
-- `com/android/ex/chips/RecipientEntry.java` (stub)
-- `com/android/ex/chips/RecipientEditTextView.java` (stub)
-- `com/android/ex/chips/BaseRecipientAdapter.java` (stub)
-- `com/android/ex/chips/RecipientAlternatesAdapter.java` (stub)
-- `com/android/ex/chips/PhotoManager.java` (stub)
-- `com/android/ex/chips/DropdownChipLayouter.java` (stub)
-- `com/android/ex/chips/recipientchip/DrawableRecipientChip.java` (stub)
-
-**Note:** These stubs have been replaced with the full AOSP chips library. See PATCH-015.
-
-### PATCH-004: Stub Library - com.android.ex.photo
+### PATCH-003: Stub Library - com.android.ex.photo
 
 **Status:** ✅ Complete
 **Rationale:** AOSP photo viewer library not available as public dependency
@@ -76,7 +64,7 @@ When updating upstream, apply patches in this order:
 
 **Future Work:** Replace with standard image viewer or copy full AOSP library.
 
-### PATCH-005: Stub Library - com.android.common.contacts
+### PATCH-004: Stub Library - com.android.common.contacts
 
 **Status:** ✅ Complete
 **Rationale:** DataUsageStatUpdater not available, used for analytics only
@@ -85,7 +73,7 @@ When updating upstream, apply patches in this order:
 
 **Notes:** This is a no-op stub. The class updates contact usage statistics which is non-essential.
 
-### PATCH-006: Stub Library - com.android.vcard
+### PATCH-005: Stub Library - com.android.vcard
 
 **Status:** ✅ Complete
 **Rationale:** AOSP vCard library not available as public dependency
@@ -106,7 +94,7 @@ When updating upstream, apply patches in this order:
 
 **Future Work:** Replace with ez-vcard library or copy full AOSP vcard library.
 
-### PATCH-007: R.id Switch Statement Conversion
+### PATCH-006: R.id Switch Statement Conversion
 
 **Status:** ✅ Complete
 **Rationale:** Library modules have non-final R.id values, switch statements don't work
@@ -137,7 +125,7 @@ if (id == R.id.action_add) {
 }
 ```
 
-### PATCH-008: Resource Conflict Resolution - iconSize
+### PATCH-007: Resource Conflict Resolution - iconSize
 
 **Status:** ✅ Complete
 **Rationale:** `attr/iconSize` conflicts with Material library's attribute
@@ -146,14 +134,14 @@ if (id == R.id.action_add) {
 - `com/android/messaging/ui/ContactIconView.java`: Updated styleable reference
 - All layout files using `app:iconSize` → `app:contactIconSize`
 
-### PATCH-009: Missing Style - PhotoViewTheme.Translucent
+### PATCH-008: Missing Style - PhotoViewTheme.Translucent
 
 **Status:** ✅ Complete
 **Rationale:** Parent theme from photo library stub
 **Files Modified:**
 - `res/values/styles.xml`: Added stub `PhotoViewTheme.Translucent` style
 
-### PATCH-010: Chips Library Attributes
+### PATCH-009: Chips Library Attributes
 
 **Status:** ✅ Complete
 **Rationale:** RecipientEditTextView uses custom attributes from chips library
@@ -169,14 +157,14 @@ if (id == R.id.action_add) {
   - `chipTextSize`
   - `chipDeleteIcon`
 
-### PATCH-011: CustomVCardEntry Child Support
+### PATCH-010: CustomVCardEntry Child Support
 
 **Status:** ✅ Complete
 **Rationale:** CustomVCardEntryConstructor uses addChild() method
 **Files Modified:**
 - `com/android/messaging/datamodel/media/CustomVCardEntry.java`: Added `addChild()` and `getChildren()` methods
 
-### PATCH-012: ContentProvider Authority Prefix Change
+### PATCH-011: ContentProvider Authority Prefix Change
 
 **Status:** ✅ Complete
 **Rationale:** Avoid conflicts with stock AOSP Messaging app (com.android.messaging)
@@ -198,7 +186,7 @@ public static final String AUTHORITY =
 
 **Notes:** This is required to install alongside the stock Messaging app during development/testing. The app manifest must declare matching authorities.
 
-### PATCH-013: Theme Updates for Dark Mode and Edge-to-Edge
+### PATCH-012: Theme Updates for Dark Mode and Edge-to-Edge
 
 **Status:** ✅ Complete
 **Rationale:** Support system dark mode and fix content scrolling under status bar
@@ -211,7 +199,7 @@ public static final String AUTHORITY =
 - Automatic dark mode following system settings
 - Proper handling of system window insets (status bar, navigation bar)
 
-### PATCH-014: Default SMS App Prompt on Startup
+### PATCH-013: Default SMS App Prompt on Startup
 
 **Status:** ✅ Complete
 **Rationale:** SMS apps must be the default SMS app to send/receive messages
@@ -233,7 +221,7 @@ private void promptForDefaultSmsAppIfNeeded() {
 }
 ```
 
-### PATCH-015: Full AOSP Chips Library Vendoring
+### PATCH-014: Full AOSP Chips Library Vendoring
 
 **Status:** ✅ Complete
 **Date:** 2026-02-08
@@ -317,7 +305,7 @@ See `sms-upstream/src/main/java/com/android/ex/chips/README.md` for detailed upd
 - All modifications documented for future updates
 - Upstream source URL and date recorded
 
-### PATCH-016: Modern IME Inset Handling for Edge-to-Edge
+### PATCH-015: Modern IME Inset Handling for Edge-to-Edge
 
 **Status:** ✅ Complete (Enhancement - not modifying existing AOSP code)
 **Type:** Feature Addition
@@ -429,7 +417,7 @@ When updating upstream:
 - [ ] Replace src/main/java/com/android/messaging with new source
 - [ ] Replace src/main/res with new resources
 - [ ] Keep stub directories intact (android.support, com.android.ex, etc.)
-- [ ] Apply patches PATCH-007 through PATCH-014 to new source
+- [ ] Apply patches PATCH-002 through PATCH-015 to new source
 - [ ] Build and fix new errors
 - [ ] Document any NEW patches required
 - [ ] Test basic SMS functionality
