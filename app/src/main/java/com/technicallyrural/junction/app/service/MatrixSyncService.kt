@@ -5,11 +5,18 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import com.technicallyrural.junction.app.worker.MatrixIdleCheckWorker
+import java.util.concurrent.TimeUnit
 import com.technicallyrural.junction.app.R
 import com.technicallyrural.junction.app.matrix.MatrixConfigRepository
 import com.technicallyrural.junction.app.ui.MatrixConfigActivity
@@ -56,6 +63,12 @@ class MatrixSyncService : Service() {
     private var bridge: TrixnityMatrixBridge? = null
     private lateinit var configRepository: MatrixConfigRepository
 
+    // Idle mode detection
+    private var screenReceiver: BroadcastReceiver? = null
+    private var idleTimer: Job? = null
+    private var isIdleMode = false
+    private val idleTimeoutMs = 15 * 60 * 1000L // 15 minutes
+
     companion object {
         private const val TAG = "MatrixSyncService"
         private const val CHANNEL_ID = "matrix_sync"
@@ -97,6 +110,9 @@ class MatrixSyncService : Service() {
 
         // Start foreground with notification
         startForeground(NOTIFICATION_ID, createNotification("Connecting..."))
+
+        // Register screen on/off receiver for idle detection
+        registerScreenReceiver()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -117,6 +133,8 @@ class MatrixSyncService : Service() {
     override fun onDestroy() {
         Log.d(TAG, "MatrixSyncService destroyed")
         stopMatrixSync()
+        unregisterScreenReceiver()
+        cancelIdleMode()
         scope.cancel()
         super.onDestroy()
     }
@@ -370,8 +388,14 @@ class MatrixSyncService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
+        val title = if (isIdleMode) {
+            "Matrix Bridge (Idle)"
+        } else {
+            "Matrix Bridge (Active)"
+        }
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Matrix Bridge Active")
+            .setContentTitle(title)
             .setContentText(statusText)
             .setSmallIcon(R.drawable.ic_notification) // TODO: Create icon
             .setOngoing(true)
@@ -385,6 +409,162 @@ class MatrixSyncService : Service() {
     private fun updateNotification(statusText: String) {
         val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.notify(NOTIFICATION_ID, createNotification(statusText))
+    }
+
+    // ========================================================================
+    // IDLE MODE DETECTION (Battery Optimization)
+    // ========================================================================
+
+    /**
+     * Register broadcast receiver for screen on/off events.
+     */
+    private fun registerScreenReceiver() {
+        screenReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                when (intent.action) {
+                    Intent.ACTION_SCREEN_ON -> {
+                        Log.d(TAG, "Screen ON - resuming active sync")
+                        resumeActiveMode()
+                    }
+                    Intent.ACTION_SCREEN_OFF -> {
+                        Log.d(TAG, "Screen OFF - scheduling idle mode")
+                        scheduleIdleMode()
+                    }
+                }
+            }
+        }
+
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
+        }
+
+        registerReceiver(screenReceiver, filter)
+        Log.d(TAG, "Screen receiver registered for idle detection")
+    }
+
+    /**
+     * Unregister screen receiver.
+     */
+    private fun unregisterScreenReceiver() {
+        screenReceiver?.let {
+            try {
+                unregisterReceiver(it)
+                Log.d(TAG, "Screen receiver unregistered")
+            } catch (e: Exception) {
+                Log.w(TAG, "Error unregistering screen receiver", e)
+            }
+        }
+        screenReceiver = null
+    }
+
+    /**
+     * Schedule transition to idle mode after timeout.
+     */
+    private fun scheduleIdleMode() {
+        // Cancel existing timer
+        idleTimer?.cancel()
+
+        // Schedule idle mode after 15 minutes
+        idleTimer = scope.launch {
+            delay(idleTimeoutMs)
+            enterIdleMode()
+        }
+
+        Log.d(TAG, "Idle mode scheduled in ${idleTimeoutMs / 1000 / 60} minutes")
+    }
+
+    /**
+     * Enter idle mode: Stop continuous sync, start periodic WorkManager checks.
+     */
+    private fun enterIdleMode() {
+        if (isIdleMode) {
+            Log.d(TAG, "Already in idle mode")
+            return
+        }
+
+        Log.d(TAG, "Entering idle mode")
+        isIdleMode = true
+
+        scope.launch {
+            // Stop continuous sync to save battery
+            bridge?.stopSync()
+            Log.d(TAG, "Continuous sync stopped")
+
+            // Schedule periodic checks every 15 minutes
+            schedulePeriodicChecks()
+
+            // Update notification
+            updateNotification("Idle mode - checking every 15 min")
+        }
+    }
+
+    /**
+     * Resume active mode: Stop periodic checks, start continuous sync.
+     */
+    private fun resumeActiveMode() {
+        // Cancel idle timer if screen turned on before timeout
+        idleTimer?.cancel()
+
+        if (!isIdleMode) {
+            Log.d(TAG, "Already in active mode")
+            return
+        }
+
+        Log.d(TAG, "Resuming active mode")
+        isIdleMode = false
+
+        scope.launch {
+            // Cancel periodic checks
+            cancelPeriodicChecks()
+
+            // Resume continuous sync
+            bridge?.startSync()
+            Log.d(TAG, "Continuous sync resumed")
+
+            // Restart presence updates
+            startPresenceUpdates()
+
+            // Update notification
+            val config = configRepository.loadConfig()
+            updateNotification("Connected to ${config.serverUrl}")
+        }
+    }
+
+    /**
+     * Schedule WorkManager periodic checks for idle mode.
+     */
+    private fun schedulePeriodicChecks() {
+        val workRequest = PeriodicWorkRequestBuilder<MatrixIdleCheckWorker>(
+            repeatInterval = 15,
+            repeatIntervalTimeUnit = TimeUnit.MINUTES
+        ).build()
+
+        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+            MatrixIdleCheckWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.REPLACE,
+            workRequest
+        )
+
+        Log.d(TAG, "Periodic checks scheduled (every 15 min)")
+    }
+
+    /**
+     * Cancel WorkManager periodic checks.
+     */
+    private fun cancelPeriodicChecks() {
+        WorkManager.getInstance(applicationContext)
+            .cancelUniqueWork(MatrixIdleCheckWorker.WORK_NAME)
+
+        Log.d(TAG, "Periodic checks cancelled")
+    }
+
+    /**
+     * Cancel idle mode timer and WorkManager.
+     */
+    private fun cancelIdleMode() {
+        idleTimer?.cancel()
+        cancelPeriodicChecks()
     }
 }
 

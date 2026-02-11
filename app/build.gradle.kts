@@ -99,6 +99,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.viewmodel)
 
+    // WorkManager for idle mode periodic checks
+    implementation(libs.androidx.work.runtime)
+
     // Material Design
     implementation(libs.material)
 
