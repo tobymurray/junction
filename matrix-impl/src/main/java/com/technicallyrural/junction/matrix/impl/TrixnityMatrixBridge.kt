@@ -3,7 +3,7 @@ package com.technicallyrural.junction.matrix.impl
 import android.content.Context
 import com.technicallyrural.junction.matrix.*
 import kotlinx.coroutines.CoroutineScope
-import net.folivo.trixnity.client.MatrixClient
+import de.connect2x.trixnity.client.MatrixClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
@@ -14,13 +14,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
-import net.folivo.trixnity.client.room
-import net.folivo.trixnity.client.room.message.text
-import net.folivo.trixnity.client.store.TimelineEvent
-import net.folivo.trixnity.core.model.RoomAliasId
-import net.folivo.trixnity.core.model.RoomId
-import net.folivo.trixnity.core.model.events.StateEventContent
-import net.folivo.trixnity.core.model.events.m.room.RoomMessageEventContent
+import de.connect2x.trixnity.client.room
+import de.connect2x.trixnity.client.room.message.text
+import de.connect2x.trixnity.client.store.TimelineEvent
+import de.connect2x.trixnity.core.model.RoomAliasId
+import de.connect2x.trixnity.core.model.RoomId
+import de.connect2x.trixnity.core.model.events.StateEventContent
+import de.connect2x.trixnity.core.model.events.m.room.RoomMessageEventContent
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

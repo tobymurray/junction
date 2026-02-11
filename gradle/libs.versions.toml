@@ -42,10 +42,10 @@ material = "1.13.0"
 coroutines = "1.10.2"
 
 # Matrix - Trixnity SDK
-# https://github.com/benkuly/trixnity
+# https://gitlab.com/connect2x/trixnity/trixnity
 # API docs: https://trixnity.connect2x.de/api/
-# Latest stable: 4.22.7
-trixnity = "4.22.7"
+# Latest stable: 5.1.0
+trixnity = "5.1.0"
 
 # Ktor - HTTP client library (required by Trixnity)
 # https://ktor.io/
@@ -93,7 +93,9 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 
 # Matrix - Trixnity
 # Core client includes all necessary APIs for messaging and room management
-trixnity-client = { group = "net.folivo", name = "trixnity-client", version.ref = "trixnity" }
+trixnity-client = { group = "de.connect2x.trixnity", name = "trixnity-client", version.ref = "trixnity" }
+# Crypto driver (required in 5.x) - using Vodozemac (Rust-based, recommended)
+trixnity-crypto-driver-vodozemac = { group = "de.connect2x.trixnity", name = "trixnity-crypto-driver-vodozemac", version.ref = "trixnity" }
 # Media support artifacts (if needed):
 # trixnity-client-media-okio for file-based media storage
 # trixnity-clientserverapi-client (included transitively)

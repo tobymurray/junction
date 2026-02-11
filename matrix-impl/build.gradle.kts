@@ -56,11 +56,11 @@ dependencies {
     implementation(project(":core-matrix"))
 
     // ========================================================================
-    // Matrix SDK - Trixnity
-    // Note: Media functionality is included in trixnity-client-media-okio
+    // Matrix SDK - Trixnity 5.x
+    // Note: Crypto driver is now required (using Vodozemac)
     // ========================================================================
     implementation(libs.trixnity.client)
-    // implementation(libs.trixnity.client.media) // Not available in 4.22.7
+    implementation(libs.trixnity.crypto.driver.vodozemac)
 
     // Ktor HTTP client engine (required by Trixnity for network requests)
     implementation(libs.ktor.client.okhttp)

@@ -317,6 +317,83 @@ See `sms-upstream/src/main/java/com/android/ex/chips/README.md` for detailed upd
 - All modifications documented for future updates
 - Upstream source URL and date recorded
 
+### PATCH-016: Modern IME Inset Handling for Edge-to-Edge
+
+**Status:** ✅ Complete
+**Date:** 2026-02-10
+**Rationale:** Fix keyboard overlaying input field on Android 11+ with edge-to-edge enabled
+**Affected Devices:** All devices with API 30+ (especially GrapheneOS, Pixel devices on Android 14+)
+
+**Problem:**
+- AppCompat 1.7.0+ automatically enables edge-to-edge on API 35 (Android 15)
+- The base activity's edge-to-edge fix consumed ALL window insets including IME (keyboard) insets
+- The manifest's `android:windowSoftInputMode="adjustResize"` doesn't work when IME insets are consumed at DecorView
+- Result: Keyboard overlays the message input field, user cannot see what they're typing
+
+**Files Modified:**
+
+1. **`com/android/messaging/ui/BugleActionBarActivity.java`** (lines 74-88):
+   - Changed inset listener to only consume system bar insets (status bar, navigation bar)
+   - Allow IME insets to propagate to child views
+   - Changed from `return WindowInsetsCompat.CONSUMED;` to `return windowInsets.inset(systemBars);`
+
+2. **`com/android/messaging/ui/conversation/ConversationActivity.java`** (onCreate, after setContentView):
+   - Added `android.view.View` import
+   - Added IME inset listener on root content view (`conversation_and_compose_container`)
+   - Applies IME insets as bottom padding to push content above keyboard
+
+**Change Pattern:**
+
+```java
+// BugleActionBarActivity.java - Line 87
+// BEFORE:
+return WindowInsetsCompat.CONSUMED;
+
+// AFTER:
+// Return insets with only system bars consumed, allowing IME insets
+// to propagate for proper adjustResize behavior.
+return windowInsets.inset(systemBars);
+```
+
+```java
+// ConversationActivity.java - After setContentView():
+// NEW CODE:
+// Modern IME handling: Apply IME insets as bottom padding to the root content view.
+// This is required because adjustResize is deprecated and doesn't work with edge-to-edge.
+final View rootView = findViewById(R.id.conversation_and_compose_container);
+if (rootView != null) {
+    androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(rootView,
+            (v, windowInsets) -> {
+                androidx.core.graphics.Insets imeInsets = windowInsets.getInsets(
+                        androidx.core.view.WindowInsetsCompat.Type.ime());
+                // Apply IME inset as bottom padding to push content above keyboard
+                v.setPadding(v.getPaddingLeft(), v.getPaddingTop(),
+                        v.getPaddingRight(), imeInsets.bottom);
+                return windowInsets;
+            });
+}
+```
+
+**Technical Notes:**
+- This is the modern Android 11+ (API 30+) approach for handling IME with edge-to-edge
+- `adjustResize` mode (manifest) is deprecated but kept for compatibility with older devices
+- Selective inset consumption is critical: system bars consumed, IME insets propagated
+- The root content view (`ImeDetectFrameLayout`) receives IME insets and applies bottom padding
+- This pushes the entire conversation layout (RecyclerView + compose area) above the keyboard
+
+**Testing:**
+- Open any conversation
+- Tap message input field to show keyboard
+- Verify input field is visible above keyboard
+- Verify user can see text as they type
+- Test on portrait and landscape orientations
+- Test with gesture navigation and 3-button navigation
+
+**Update Instructions:**
+When updating upstream AOSP, re-apply both changes:
+1. `BugleActionBarActivity.java`: Ensure inset listener returns `windowInsets.inset(systemBars)` not `CONSUMED`
+2. `ConversationActivity.java`: Ensure IME inset listener is added after `setContentView()`
+
 ---
 
 ## Forbidden Changes

@@ -25,6 +25,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.ActionBar;
 import android.text.TextUtils;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.android.messaging.R;
 import com.android.messaging.datamodel.MessagingContentProvider;
@@ -64,6 +65,21 @@ public class ConversationActivity extends BugleActionBarActivity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.conversation_activity);
+
+        // Modern IME handling: Apply IME insets as bottom padding to the root content view.
+        // This is required because adjustResize is deprecated and doesn't work with edge-to-edge.
+        final View rootView = findViewById(R.id.conversation_and_compose_container);
+        if (rootView != null) {
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(rootView,
+                    (v, windowInsets) -> {
+                        androidx.core.graphics.Insets imeInsets = windowInsets.getInsets(
+                                androidx.core.view.WindowInsetsCompat.Type.ime());
+                        // Apply IME inset as bottom padding to push content above keyboard
+                        v.setPadding(v.getPaddingLeft(), v.getPaddingTop(),
+                                v.getPaddingRight(), imeInsets.bottom);
+                        return windowInsets;
+                    });
+        }
 
         final Intent intent = getIntent();
 

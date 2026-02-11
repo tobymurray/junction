@@ -9,18 +9,31 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import net.folivo.trixnity.client.MatrixClient
-import net.folivo.trixnity.client.fromStore
-import net.folivo.trixnity.client.login
-import net.folivo.trixnity.client.media.createInMemoryMediaStoreModule
-import net.folivo.trixnity.client.store.repository.createInMemoryRepositoriesModule
-import net.folivo.trixnity.clientserverapi.model.authentication.IdentifierType
+import de.connect2x.trixnity.client.MatrixClient
+import de.connect2x.trixnity.client.create
+import de.connect2x.trixnity.client.CryptoDriverModule
+import de.connect2x.trixnity.client.MediaStoreModule
+import de.connect2x.trixnity.client.RepositoriesModule
+import de.connect2x.trixnity.client.media.inMemory
+import de.connect2x.trixnity.client.store.repository.inMemory
+import de.connect2x.trixnity.clientserverapi.client.MatrixClientAuthProviderData
+import de.connect2x.trixnity.clientserverapi.client.classicLoginWithPassword
+import de.connect2x.trixnity.clientserverapi.model.authentication.IdentifierType
+import de.connect2x.trixnity.crypto.driver.CryptoDriver
+import de.connect2x.trixnity.crypto.driver.vodozemac.VodozemacCryptoDriver
+import org.koin.dsl.module
 
 /**
- * Real implementation of Matrix client manager using Trixnity SDK.
+ * Real implementation of Matrix client manager using Trixnity SDK 5.x.
  *
  * This replaces StubMatrixClientManager with actual Trixnity integration.
  * Handles client lifecycle, authentication, and sync management.
+ *
+ * **Changes in 5.x:**
+ * - Package renamed from net.folivo to de.connect2x
+ * - New authentication system with MatrixClientAuthProviderData
+ * - MatrixClient.create() replaces login() and fromStore()
+ * - CryptoDriverModule is now required
  */
 class TrixnityClientManager(
     private val context: Context
@@ -36,15 +49,18 @@ class TrixnityClientManager(
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: Flow<Boolean> = _isSyncing.asStateFlow()
 
-    // Reusable repositories module - created once and shared across login/restore
-    private val repositoriesModule = createInMemoryRepositoriesModule()
-    private val mediaStoreModule = createInMemoryMediaStoreModule()
+    // Reusable modules - using new 5.x factory pattern
+    private val repositoriesModule = RepositoriesModule.inMemory()
+    private val mediaStoreModule = MediaStoreModule.inMemory()
+    private val cryptoDriverModule = CryptoDriverModule {
+        module { single<CryptoDriver> { VodozemacCryptoDriver } }
+    }
 
     /**
      * Initialize MatrixClient from stored credentials.
      *
-     * Trixnity stores session data in its repositories automatically after login.
-     * This method attempts to restore the session from those stored credentials.
+     * In Trixnity 5.x, this uses MatrixClient.create() without authProviderData.
+     * The client will attempt to restore from stored session data.
      *
      * Note: The parameters are kept for interface compatibility but not used directly.
      * Trixnity loads credentials from its internal AccountStore.
@@ -59,22 +75,20 @@ class TrixnityClientManager(
     ): Boolean {
         return try {
             // Attempt to restore client from Trixnity's internal storage
-            val result = MatrixClient.fromStore(
+            // In 5.x, MatrixClient.create() with authProviderData=null will restore from store
+            val result = MatrixClient.create(
                 repositoriesModule = repositoriesModule,
-                mediaStoreModule = mediaStoreModule
+                mediaStoreModule = mediaStoreModule,
+                cryptoDriverModule = cryptoDriverModule,
+                authProviderData = null, // null = restore from store
+                coroutineContext = Dispatchers.IO
             )
 
             result.fold(
                 onSuccess = { matrixClient ->
-                    if (matrixClient != null) {
-                        _client = matrixClient
-                        _isInitialized.value = true
-                        true
-                    } else {
-                        // No stored session found
-                        _isInitialized.value = false
-                        false
-                    }
+                    _client = matrixClient
+                    _isInitialized.value = true
+                    true
                 },
                 onFailure = { error ->
                     error.printStackTrace()
@@ -92,6 +106,10 @@ class TrixnityClientManager(
     /**
      * Login with username and password.
      *
+     * In Trixnity 5.x, this uses a two-step process:
+     * 1. MatrixClientAuthProviderData.classicLoginWithPassword() to get auth data
+     * 2. MatrixClient.create() with the auth data
+     *
      * @param serverUrl Homeserver URL
      * @param username Username (without @ or :server)
      * @param password User password
@@ -103,16 +121,25 @@ class TrixnityClientManager(
         password: String
     ): LoginResult {
         return try {
-            // Create Matrix client with login credentials using v4.22.7 API
-            val matrixClient = MatrixClient.login(
+            // Step 1: Perform classic password login to get auth provider data
+            val authProviderData = MatrixClientAuthProviderData.classicLoginWithPassword(
                 baseUrl = Url(serverUrl),
                 identifier = IdentifierType.User(username),
                 password = password,
-                initialDeviceDisplayName = "Junction SMS Bridge",
-                repositoriesModule = repositoriesModule,
-                mediaStoreModule = mediaStoreModule
+                initialDeviceDisplayName = "Junction SMS Bridge"
             ).getOrElse { error ->
                 return LoginResult.Error(error.message ?: "Login failed")
+            }
+
+            // Step 2: Create MatrixClient with the auth provider data
+            val matrixClient = MatrixClient.create(
+                repositoriesModule = repositoriesModule,
+                mediaStoreModule = mediaStoreModule,
+                cryptoDriverModule = cryptoDriverModule,
+                authProviderData = authProviderData,
+                coroutineContext = Dispatchers.IO
+            ).getOrElse { error ->
+                return LoginResult.Error(error.message ?: "Client creation failed")
             }
 
             _client = matrixClient
@@ -120,7 +147,7 @@ class TrixnityClientManager(
 
             LoginResult.Success(
                 userId = matrixClient.userId.full,
-                accessToken = "", // Note: Not directly exposed in v4.22.7 interface
+                accessToken = authProviderData.accessToken,
                 deviceId = matrixClient.deviceId
             )
         } catch (e: Exception) {
@@ -151,8 +178,10 @@ class TrixnityClientManager(
      * Stop the Matrix sync loop.
      */
     fun stopSync() {
-        _client?.close() // Closes the client and stops sync
-        _isSyncing.value = false
+        scope.launch {
+            _client?.stopSync()
+            _isSyncing.value = false
+        }
     }
 
     sealed class LoginResult {

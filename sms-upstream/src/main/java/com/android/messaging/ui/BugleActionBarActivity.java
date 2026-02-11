@@ -74,13 +74,17 @@ public class BugleActionBarActivity extends AppCompatActivity implements ImeUtil
         // Edge-to-edge fix: Activity 1.10+ calls enableEdgeToEdge() automatically,
         // drawing the app behind system bars. On API 35 there is no opt-out.
         // Pad the DecorView so everything sits inside the safe area.
+        // CRITICAL: Only consume system bar insets, NOT IME insets.
+        // Consuming IME insets breaks adjustResize mode (manifest windowSoftInputMode).
         ViewCompat.setOnApplyWindowInsetsListener(getWindow().getDecorView(),
                 (v, windowInsets) -> {
                     Insets systemBars = windowInsets.getInsets(
                             WindowInsetsCompat.Type.systemBars());
                     v.setPadding(systemBars.left, systemBars.top,
                             systemBars.right, systemBars.bottom);
-                    return WindowInsetsCompat.CONSUMED;
+                    // Return insets with only system bars consumed, allowing IME insets
+                    // to propagate for proper adjustResize behavior.
+                    return windowInsets.inset(systemBars);
                 });
 
         mLastScreenHeight = getResources().getDisplayMetrics().heightPixels;

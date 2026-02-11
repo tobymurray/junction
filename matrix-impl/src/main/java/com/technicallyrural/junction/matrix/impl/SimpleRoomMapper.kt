@@ -6,8 +6,8 @@ import android.telephony.PhoneNumberUtils
 import com.technicallyrural.junction.matrix.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import net.folivo.trixnity.core.model.RoomAliasId
-import net.folivo.trixnity.core.model.RoomId
+import de.connect2x.trixnity.core.model.RoomAliasId
+import de.connect2x.trixnity.core.model.RoomId
 import java.util.Locale
 
 /**
