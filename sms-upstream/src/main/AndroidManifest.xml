@@ -209,10 +209,13 @@
              SMS RECEIVERS
              ================================================================ -->
 
-        <!-- Primary SMS receiver (when we are default SMS app) - KLP+ -->
+        <!-- Primary SMS receiver (when we are default SMS app) - KLP+
+             DISABLED: Replaced by app module's SmsDeliverReceiver for Matrix bridging.
+             The app receiver forwards to AOSP storage via CoreSmsRegistry listener. -->
         <receiver
             android:name="com.android.messaging.receiver.SmsDeliverReceiver"
             android:exported="true"
+            android:enabled="false"
             android:permission="android.permission.BROADCAST_SMS">
             <intent-filter>
                 <action android:name="android.provider.Telephony.SMS_DELIVER" />

@@ -28,6 +28,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.Collections
 
 /**
  * Foreground service that maintains Matrix sync connection.
@@ -52,6 +53,52 @@ class MatrixSyncService : Service() {
     private lateinit var clientManager: TrixnityClientManager
     private var bridge: TrixnityMatrixBridge? = null
     private lateinit var configRepository: MatrixConfigRepository
+
+    companion object {
+        private const val TAG = "MatrixSyncService"
+        private const val CHANNEL_ID = "matrix_sync"
+        private const val NOTIFICATION_ID = 1001
+        private const val MAX_CACHE_SIZE = 1000
+
+        const val ACTION_START_SYNC = "com.technicallyrural.junction.START_MATRIX_SYNC"
+        const val ACTION_STOP_SYNC = "com.technicallyrural.junction.STOP_MATRIX_SYNC"
+
+        /**
+         * Deduplication cache for Matrix → SMS forwarding.
+         * Stores Matrix event IDs to prevent duplicate SMS sends when
+         * Matrix replays events after reconnect or sync loop restart.
+         *
+         * Uses synchronized LRU set with automatic eviction after 1000 entries.
+         * Thread-safe for concurrent access.
+         */
+        private val processedEventIds: MutableSet<String> = Collections.synchronizedSet(
+            object : LinkedHashSet<String>() {
+                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
+                    return size > MAX_CACHE_SIZE
+                }
+            }
+        )
+
+        /**
+         * Start Matrix sync service.
+         */
+        fun start(context: Context) {
+            val intent = Intent(context, MatrixSyncService::class.java).apply {
+                action = ACTION_START_SYNC
+            }
+            context.startForegroundService(intent)
+        }
+
+        /**
+         * Stop Matrix sync service.
+         */
+        fun stop(context: Context) {
+            val intent = Intent(context, MatrixSyncService::class.java).apply {
+                action = ACTION_STOP_SYNC
+            }
+            context.startService(intent)
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -176,7 +223,16 @@ class MatrixSyncService : Service() {
         scope.launch {
             bridgeInstance.observeMatrixMessages().collect { matrixMessage ->
                 try {
-                    Log.d(TAG, "Received Matrix message: ${matrixMessage.body} from ${matrixMessage.sender}")
+                    // Deduplication check: Skip if we've already processed this event
+                    if (processedEventIds.contains(matrixMessage.eventId)) {
+                        Log.w(TAG, "Duplicate Matrix event detected (id=${matrixMessage.eventId}), skipping SMS send")
+                        return@collect
+                    }
+
+                    Log.d(TAG, "Matrix message from ${matrixMessage.sender}, eventId=${matrixMessage.eventId}")
+
+                    // Add to cache before processing to prevent race conditions
+                    processedEventIds.add(matrixMessage.eventId)
 
                     // Get phone number from room mapping
                     val phoneNumber = MatrixRegistry.roomMapper.getContactForRoom(matrixMessage.roomId)
@@ -185,7 +241,7 @@ class MatrixSyncService : Service() {
                         return@collect
                     }
 
-                    Log.d(TAG, "Matrix → SMS: Sending to $phoneNumber")
+                    Log.d(TAG, "Matrix → SMS: $phoneNumber (eventId=${matrixMessage.eventId})")
 
                     // Send SMS via CoreSmsRegistry
                     if (!CoreSmsRegistry.isInitialized) {
@@ -200,15 +256,19 @@ class MatrixSyncService : Service() {
 
                     when (result) {
                         is SendResult.Success -> {
-                            Log.d(TAG, "Matrix message successfully bridged to SMS: $phoneNumber")
+                            Log.d(TAG, "Matrix message bridged to SMS: $phoneNumber, eventId=${matrixMessage.eventId}")
                         }
                         is SendResult.Failure -> {
-                            Log.e(TAG, "Failed to send SMS: ${result.error}")
+                            Log.e(TAG, "Failed to send SMS for eventId=${matrixMessage.eventId}: ${result.error}")
+                            // Note: We keep eventId in cache even on failure to prevent
+                            // infinite retry loops. Retry logic should be handled by
+                            // WorkManager (Phase 1 work).
                         }
                     }
 
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error processing Matrix message", e)
+                    Log.e(TAG, "Error processing Matrix message eventId=${matrixMessage.eventId}", e)
+                    // Keep eventId in cache even on exception to prevent retry storms
                 }
             }
         }
@@ -304,35 +364,6 @@ class MatrixSyncService : Service() {
     private fun updateNotification(statusText: String) {
         val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.notify(NOTIFICATION_ID, createNotification(statusText))
-    }
-
-    companion object {
-        private const val TAG = "MatrixSyncService"
-        private const val CHANNEL_ID = "matrix_sync"
-        private const val NOTIFICATION_ID = 1001
-
-        const val ACTION_START_SYNC = "com.technicallyrural.junction.START_MATRIX_SYNC"
-        const val ACTION_STOP_SYNC = "com.technicallyrural.junction.STOP_MATRIX_SYNC"
-
-        /**
-         * Start Matrix sync service.
-         */
-        fun start(context: Context) {
-            val intent = Intent(context, MatrixSyncService::class.java).apply {
-                action = ACTION_START_SYNC
-            }
-            context.startForegroundService(intent)
-        }
-
-        /**
-         * Stop Matrix sync service.
-         */
-        fun stop(context: Context) {
-            val intent = Intent(context, MatrixSyncService::class.java).apply {
-                action = ACTION_STOP_SYNC
-            }
-            context.startService(intent)
-        }
     }
 }
 

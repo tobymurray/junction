@@ -156,6 +156,23 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
+        <!-- ================================================================
+             SMS/MMS RECEIVERS (app module)
+             ================================================================ -->
+
+        <!-- Primary SMS receiver for Matrix bridging
+             This receiver intercepts SMS_DELIVER before AOSP processing,
+             enabling SMS → Matrix forwarding while maintaining normal
+             SMS storage and UI functionality via CoreSmsRegistry listener. -->
+        <receiver
+            android:name=".receiver.SmsDeliverReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_DELIVER" />
+            </intent-filter>
+        </receiver>
+
         <!-- All sms-upstream components (activities, receivers, services,
              providers) are declared in sms-upstream/src/main/AndroidManifest.xml
              and merged automatically by the Android Gradle Plugin. -->
