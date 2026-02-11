@@ -68,15 +68,17 @@ class MatrixSyncService : Service() {
          * Stores Matrix event IDs to prevent duplicate SMS sends when
          * Matrix replays events after reconnect or sync loop restart.
          *
-         * Uses synchronized LRU set with automatic eviction after 1000 entries.
+         * Uses synchronized LRU map with automatic eviction after 1000 entries.
          * Thread-safe for concurrent access.
          */
-        private val processedEventIds: MutableSet<String> = Collections.synchronizedSet(
-            object : LinkedHashSet<String>() {
-                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
-                    return size > MAX_CACHE_SIZE
+        private val processedEventIds: MutableSet<String> = Collections.newSetFromMap(
+            Collections.synchronizedMap(
+                object : LinkedHashMap<String, Boolean>(MAX_CACHE_SIZE + 1, 0.75f, true) {
+                    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Boolean>?): Boolean {
+                        return size > MAX_CACHE_SIZE
+                    }
                 }
-            }
+            )
         )
 
         /**

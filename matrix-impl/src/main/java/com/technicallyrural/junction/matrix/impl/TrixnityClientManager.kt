@@ -17,6 +17,7 @@ import de.connect2x.trixnity.client.RepositoriesModule
 import de.connect2x.trixnity.client.media.inMemory
 import de.connect2x.trixnity.client.store.repository.inMemory
 import de.connect2x.trixnity.clientserverapi.client.MatrixClientAuthProviderData
+import de.connect2x.trixnity.clientserverapi.client.classic
 import de.connect2x.trixnity.clientserverapi.client.classicLoginWithPassword
 import de.connect2x.trixnity.clientserverapi.model.authentication.IdentifierType
 import de.connect2x.trixnity.crypto.driver.CryptoDriver
@@ -74,13 +75,21 @@ class TrixnityClientManager(
         accessToken: String
     ): Boolean {
         return try {
-            // Attempt to restore client from Trixnity's internal storage
-            // In 5.x, MatrixClient.create() with authProviderData=null will restore from store
+            // TEMPORARY WORKAROUND: Create auth data from stored credentials
+            // TODO: Replace with persistent RepositoriesModule (Room DB or file-based)
+            // Currently using inMemory() repositories which don't persist across restarts
+
+            // Use .classic() helper to create auth provider data from stored credentials
+            val authProviderData = MatrixClientAuthProviderData.classic(
+                baseUrl = Url(serverUrl),
+                accessToken = accessToken
+            )
+
             val result = MatrixClient.create(
                 repositoriesModule = repositoriesModule,
                 mediaStoreModule = mediaStoreModule,
                 cryptoDriverModule = cryptoDriverModule,
-                authProviderData = null, // null = restore from store
+                authProviderData = authProviderData, // Use stored credentials
                 coroutineContext = Dispatchers.IO
             )
 

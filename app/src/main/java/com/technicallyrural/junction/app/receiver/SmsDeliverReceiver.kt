@@ -42,15 +42,17 @@ class SmsDeliverReceiver : BroadcastReceiver() {
          * Stores message IDs (hash of timestamp + address + body) to prevent
          * duplicate forwarding on app crash/restart or system redelivery.
          *
-         * Uses synchronized LRU set with automatic eviction after 1000 entries.
+         * Uses synchronized LRU map with automatic eviction after 1000 entries.
          * Thread-safe for concurrent access from multiple BroadcastReceiver instances.
          */
-        private val forwardedMessageIds: MutableSet<String> = Collections.synchronizedSet(
-            object : LinkedHashSet<String>() {
-                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
-                    return size > MAX_CACHE_SIZE
+        private val forwardedMessageIds: MutableSet<String> = Collections.newSetFromMap(
+            Collections.synchronizedMap(
+                object : LinkedHashMap<String, Boolean>(MAX_CACHE_SIZE + 1, 0.75f, true) {
+                    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Boolean>?): Boolean {
+                        return size > MAX_CACHE_SIZE
+                    }
                 }
-            }
+            )
         )
 
         /**
