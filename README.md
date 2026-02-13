@@ -203,6 +203,7 @@ All permissions are public SDK permissions:
 - [x] Crash-safe deduplication (both directions)
 - [x] Conversation-aware architecture (group message support)
 - [x] Send status tracking (PENDING → CONFIRMED → FAILED)
+- [x] **Short code support** (2FA, alerts, marketing messages) - See [SHORT_CODE_SUPPORT.md](docs/SHORT_CODE_SUPPORT.md)
 - [ ] MMS media upload/download (Phase 1)
 - [ ] WorkManager retry logic (Phase 1)
 - [ ] Integration test coverage

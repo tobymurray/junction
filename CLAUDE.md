@@ -247,6 +247,18 @@ All core functionality implemented:
 - Cache: SharedPreferences (phone → roomId, roomId → phone)
 - Fallback: Direct room creation if alias unavailable
 
+**Phone Number Support:** Full support for multiple number formats (as of 2026-02-12)
+- **E.164 phone numbers**: `+16138584798` → Room: "SMS: +16138584798"
+- **Short codes (3-8 digits)**: `83687` → Room: "SMS Short Code: 83687"
+  - Used for 2FA, alerts, marketing, service notifications
+  - Normalized as `short:83687` internally
+  - Room alias: `#sms_short_83687:homeserver.com`
+- **Alphanumeric senders**: `ALERTS` → Room: "SMS Unknown: ALERTS"
+  - Fallback for unusual formats
+  - Normalized as `unknown:ALERTS` internally
+  - Room alias: `#sms_unknown_alerts:homeserver.com`
+- See `docs/SHORT_CODE_SUPPORT.md` for detailed documentation
+
 ## Testing Strategy
 
 ### Unit Tests

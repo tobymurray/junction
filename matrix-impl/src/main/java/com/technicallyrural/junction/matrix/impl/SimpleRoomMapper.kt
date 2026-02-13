@@ -37,14 +37,23 @@ class SimpleRoomMapper(
     }
 
     override suspend fun getRoomForContact(phoneNumber: String): String? = mutex.withLock {
+        Log.e(TAG, "getRoomForContact called for: $phoneNumber")
+
         val client = clientManager.client
         if (client == null) {
-            Log.w(TAG, "Matrix client is null - not initialized yet")
-            return null
+            Log.e(TAG, "Matrix client is NULL - not initialized yet!")
+            return@withLock null
         }
 
-        // 1. Normalize phone number to E.164
-        val normalized = normalizeToE164(phoneNumber) ?: return null
+        Log.e(TAG, "Matrix client is available, proceeding...")
+
+        // 1. Normalize phone number to E.164 or detect short code
+        val normalized = normalizeToE164(phoneNumber)
+        if (normalized == null) {
+            Log.e(TAG, "Phone number normalization returned null for: $phoneNumber (should not happen)")
+            return@withLock null
+        }
+        Log.e(TAG, "Phone normalized to: $normalized")
 
         // 2. Get conversation ID from AOSP thread system
         val conversationId = AospThreadIdExtractor.getThreadIdForAddress(context, normalized)
@@ -165,21 +174,31 @@ class SimpleRoomMapper(
      */
     private suspend fun createRoomForContact(
         conversationId: String,
-        phoneE164: String,
+        normalizedNumber: String,
         alias: String
     ): String? {
         val client = clientManager.client ?: return null
 
+        // Create descriptive room name based on number type
+        val roomName = when {
+            normalizedNumber.startsWith("short:") ->
+                "SMS Short Code: ${normalizedNumber.removePrefix("short:")}"
+            normalizedNumber.startsWith("unknown:") ->
+                "SMS Unknown: ${normalizedNumber.removePrefix("unknown:")}"
+            else ->
+                "SMS: $normalizedNumber"
+        }
+
         return try {
             val roomId = client.api.room.createRoom(
-                name = "SMS: $phoneE164",
+                name = roomName,
                 roomAliasId = RoomAliasId(alias),
                 isDirect = true,
                 invite = emptySet() // No invites needed for self-DM
             ).getOrElse { error ->
                 // If alias creation fails, try without alias
                 client.api.room.createRoom(
-                    name = "SMS: $phoneE164",
+                    name = roomName,
                     isDirect = true
                 ).getOrNull()
             }
@@ -188,7 +207,7 @@ class SimpleRoomMapper(
                 // Save mapping
                 roomRepo.setMapping(
                     conversationId = conversationId,
-                    participants = listOf(phoneE164),
+                    participants = listOf(normalizedNumber),
                     roomId = roomId.full,
                     alias = alias,
                     isGroup = false
@@ -205,22 +224,61 @@ class SimpleRoomMapper(
     }
 
     /**
-     * Build canonical room alias for a phone number.
+     * Build canonical room alias for a phone number or short code.
+     *
+     * Examples:
+     * - "+16138584798" -> "#sms_16138584798:homeserver.com"
+     * - "short:83687" -> "#sms_short_83687:homeserver.com"
+     * - "unknown:ALERTS" -> "#sms_unknown_alerts:homeserver.com"
      */
-    private fun buildRoomAlias(phoneE164: String): String {
-        val digits = phoneE164.replace("+", "")
-        return "#sms_$digits:$homeserverDomain"
+    private fun buildRoomAlias(normalizedNumber: String): String {
+        val sanitized = normalizedNumber
+            .replace("+", "")
+            .replace(":", "_")
+            .lowercase()
+        return "#sms_$sanitized:$homeserverDomain"
     }
 
     /**
-     * Normalize phone number to E.164 format.
+     * Normalize phone number to E.164 format, or handle as short code.
+     *
+     * Short codes are 3-8 digit numbers used for services like:
+     * - Two-factor authentication (2FA)
+     * - Marketing messages
+     * - Emergency alerts
+     * - Service notifications
+     *
+     * Returns:
+     * - E.164 format for regular phone numbers (e.g., "+16138584798")
+     * - Short code with "short:" prefix (e.g., "short:83687")
+     * - Original number with "unknown:" prefix if normalization fails
      */
     private fun normalizeToE164(phoneNumber: String): String? {
+        // Already in E.164 format
         if (phoneNumber.startsWith("+") && phoneNumber.length > 5) {
+            Log.d(TAG, "Number already in E.164 format: $phoneNumber")
             return phoneNumber
         }
 
+        // Check if this is a short code (3-8 digits only, no country code)
+        val digitsOnly = phoneNumber.replace(Regex("[^0-9]"), "")
+        if (digitsOnly.length in 3..8 && digitsOnly == phoneNumber) {
+            val shortCodeId = "short:$phoneNumber"
+            Log.d(TAG, "Detected short code: $phoneNumber -> $shortCodeId")
+            return shortCodeId
+        }
+
+        // Try E.164 normalization for regular phone numbers
         val formatted = PhoneNumberUtils.formatNumberToE164(phoneNumber, Locale.getDefault().country)
-        return formatted?.takeIf { it.startsWith("+") }
+        if (formatted != null && formatted.startsWith("+")) {
+            Log.d(TAG, "Normalized to E.164: $phoneNumber -> $formatted")
+            return formatted
+        }
+
+        // Fallback: Use original number with prefix to avoid conflicts
+        // This handles cases like alphanumeric sender IDs or unusual formats
+        val fallbackId = "unknown:$phoneNumber"
+        Log.w(TAG, "Failed to normalize, using fallback: $phoneNumber -> $fallbackId")
+        return fallbackId
     }
 }
