@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matrix status indicator colors -->
+    <color name="matrix_status_green">#4CAF50</color>     <!-- Connected: Material Green 500 -->
+    <color name="matrix_status_yellow">#FFC107</color>    <!-- Warning: Material Amber 500 -->
+    <color name="matrix_status_red">#F44336</color>       <!-- Error: Material Red 500 -->
+    <color name="matrix_status_gray">#9E9E9E</color>      <!-- Not configured: Material Gray 500 -->
+</resources>

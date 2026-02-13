@@ -77,12 +77,24 @@ class TrixnityMatrixBridge(
         timestamp: Long,
         isGroup: Boolean
     ): MatrixSendResult {
+        android.util.Log.e("TrixnityMatrixBridge", "sendToMatrix called for: $phoneNumber")
+
         val client = clientManager.client
-            ?: return MatrixSendResult.Failure(MatrixSendError.NOT_CONNECTED)
+        if (client == null) {
+            android.util.Log.e("TrixnityMatrixBridge", "Client is NULL - returning NOT_CONNECTED")
+            return MatrixSendResult.Failure(MatrixSendError.NOT_CONNECTED)
+        }
+
+        android.util.Log.e("TrixnityMatrixBridge", "Client exists, calling getRoomForContact...")
 
         // Get or create room for this contact
         val roomIdStr = roomMapper.getRoomForContact(phoneNumber)
-            ?: return MatrixSendResult.Failure(MatrixSendError.ROOM_CREATION_FAILED)
+        if (roomIdStr == null) {
+            android.util.Log.e("TrixnityMatrixBridge", "getRoomForContact returned NULL!")
+            return MatrixSendResult.Failure(MatrixSendError.ROOM_CREATION_FAILED)
+        }
+
+        android.util.Log.e("TrixnityMatrixBridge", "Got room ID: $roomIdStr")
 
         return try {
             // Send text message using Trixnity v4.22.7 API

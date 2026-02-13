@@ -34,6 +34,9 @@ class JunctionApplication : BugleApplication() {
         super.onCreate()
         Log.d(TAG, "Junction application starting")
 
+        // Register Matrix status indicator injector
+        registerActivityLifecycleCallbacks(com.technicallyrural.junction.app.ui.MatrixStatusInjector())
+
         // Check for Matrix credentials and auto-start service if configured
         autoStartMatrixService()
     }
