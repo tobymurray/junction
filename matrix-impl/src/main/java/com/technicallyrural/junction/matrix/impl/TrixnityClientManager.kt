@@ -97,9 +97,11 @@ class TrixnityClientManager(
                 onSuccess = { matrixClient ->
                     _client = matrixClient
                     _isInitialized.value = true
+                    android.util.Log.d("TrixnityClientManager", "Matrix client initialized successfully")
                     true
                 },
                 onFailure = { error ->
+                    android.util.Log.e("TrixnityClientManager", "Matrix client initialization failed", error)
                     error.printStackTrace()
                     _isInitialized.value = false
                     false

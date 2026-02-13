@@ -37,7 +37,11 @@ class SimpleRoomMapper(
     }
 
     override suspend fun getRoomForContact(phoneNumber: String): String? = mutex.withLock {
-        val client = clientManager.client ?: return null
+        val client = clientManager.client
+        if (client == null) {
+            Log.w(TAG, "Matrix client is null - not initialized yet")
+            return null
+        }
 
         // 1. Normalize phone number to E.164
         val normalized = normalizeToE164(phoneNumber) ?: return null
