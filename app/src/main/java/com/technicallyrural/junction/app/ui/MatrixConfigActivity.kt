@@ -40,6 +40,7 @@ class MatrixConfigActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMatrixConfigBinding
     private lateinit var repository: MatrixConfigRepository
     private lateinit var clientManager: TrixnityClientManager
+    private lateinit var statusViewModel: MatrixStatusViewModel
     private var currentConfig: MatrixConfig = MatrixConfig.EMPTY
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,9 +57,11 @@ class MatrixConfigActivity : AppCompatActivity() {
 
         repository = MatrixConfigRepository.getInstance(this)
         clientManager = TrixnityClientManagerSingleton.getInstance(this)
+        statusViewModel = androidx.lifecycle.ViewModelProvider(this)[MatrixStatusViewModel::class.java]
 
         setupViews()
         loadConfiguration()
+        observeConnectionStatus()
     }
 
     /**
@@ -152,6 +155,72 @@ class MatrixConfigActivity : AppCompatActivity() {
         }
 
         binding.lastConnectedText.text = lastConnectedText
+    }
+
+    /**
+     * Observe real-time connection status from MatrixStatusViewModel.
+     * Updates UI to show current sync state instead of cached timestamp.
+     */
+    private fun observeConnectionStatus() {
+        lifecycleScope.launch {
+            statusViewModel.status.collect { status ->
+                updateRealTimeConnectionStatus(status)
+            }
+        }
+    }
+
+    /**
+     * Update connection status with real-time sync state.
+     * Replaces cached "Last connected" with current connection state.
+     */
+    private fun updateRealTimeConnectionStatus(status: MatrixStatus) {
+        val (statusText, lastConnectedText, indicatorColor) = when (status) {
+            is MatrixStatus.Loading -> {
+                Triple(
+                    "Loading...",
+                    "Checking connection state...",
+                    Color.parseColor("#9E9E9E") // Gray
+                )
+            }
+            is MatrixStatus.NotConfigured -> {
+                Triple(
+                    "Not configured",
+                    "No credentials configured",
+                    Color.parseColor("#9E9E9E") // Gray
+                )
+            }
+            is MatrixStatus.ConfiguredNotRunning -> {
+                Triple(
+                    "Configured but not running",
+                    "Service failed to start (bug)",
+                    Color.parseColor("#FFC107") // Yellow
+                )
+            }
+            is MatrixStatus.Connected -> {
+                val syncTime = android.text.format.DateUtils.getRelativeTimeSpanString(
+                    status.lastMessageTime,
+                    System.currentTimeMillis(),
+                    android.text.format.DateUtils.SECOND_IN_MILLIS,
+                    android.text.format.DateUtils.FORMAT_ABBREV_RELATIVE
+                )
+                Triple(
+                    "Connected and syncing",
+                    "Last sync: $syncTime",
+                    Color.parseColor("#4CAF50") // Green
+                )
+            }
+            is MatrixStatus.Disconnected -> {
+                Triple(
+                    "Disconnected",
+                    "Not syncing with server",
+                    Color.parseColor("#F44336") // Red
+                )
+            }
+        }
+
+        binding.statusText.text = statusText
+        binding.lastConnectedText.text = lastConnectedText
+        binding.statusIndicator.setColorFilter(indicatorColor)
     }
 
     private fun saveConfiguration() {
