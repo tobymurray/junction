@@ -107,6 +107,11 @@ class SimpleRoomMapper(
 
     /**
      * Get or create service-grouped room for short code.
+     *
+     * Strategy:
+     * 1. Check if short code is already mapped to a service room (from previous messages)
+     * 2. If yes, reuse that room (ensures multi-part SMS and outbound messages use same room)
+     * 3. If no, classify message and create/find appropriate room
      */
     private suspend fun getGroupedShortCodeRoom(
         normalizedNumber: String,
@@ -115,13 +120,21 @@ class SimpleRoomMapper(
     ): String? {
         val shortCode = normalizedNumber.removePrefix("short:")
 
-        // Classify message by service
+        // STEP 1: Check if this short code is already associated with a service room
+        // This ensures multi-part SMS and outbound messages use the same room
+        val existingServiceRoom = findExistingServiceRoomForShortCode(normalizedNumber)
+        if (existingServiceRoom != null) {
+            Log.d(TAG, "Reusing existing service room for short code $shortCode: $existingServiceRoom")
+            return existingServiceRoom
+        }
+
+        // STEP 2: No existing mapping, classify message by service
         val classification = serviceClassifier.classifyMessage(shortCode, messageBody, timestamp)
 
         Log.d(TAG, "Classification result: ${classification.serviceKey} " +
                 "(confidence=${classification.confidence}, reason=${classification.reason})")
 
-        // If classification failed or returned per-number fallback, use standard mapping
+        // STEP 3: If classification failed or returned per-number fallback, use standard mapping
         if (classification.serviceKey.startsWith("unknown_")) {
             Log.d(TAG, "Using per-number mapping for unknown short code $shortCode")
             val conversationId = AospThreadIdExtractor.getThreadIdForAddress(context, normalizedNumber)
@@ -144,12 +157,44 @@ class SimpleRoomMapper(
             return createRoomForContact(conversationId, normalizedNumber, alias)
         }
 
-        // Get or create service room
+        // STEP 4: Get or create service room
         return serviceRoomMapper.getServiceRoom(
             serviceKey = classification.serviceKey,
             serviceName = classification.serviceName,
             shortCode = shortCode
         )
+    }
+
+    /**
+     * Find existing service room that this short code is already associated with.
+     *
+     * Searches all service rooms (conversationId starts with "service:") and checks
+     * if this short code is in the participants list.
+     *
+     * This ensures:
+     * - Multi-part SMS messages go to the same room (even if later parts don't match pattern)
+     * - Outbound messages use the same room as inbound messages
+     */
+    private suspend fun findExistingServiceRoomForShortCode(normalizedNumber: String): String? {
+        try {
+            val allMappings = roomRepo.getAllMappings()
+
+            // Find service rooms (conversationId = "service:$key")
+            for (mapping in allMappings) {
+                if (mapping.conversationId.startsWith("service:")) {
+                    val participants = roomRepo.getParticipants(mapping.conversationId)
+                    if (participants?.contains(normalizedNumber) == true) {
+                        Log.d(TAG, "Found existing service room for $normalizedNumber: " +
+                                "${mapping.conversationId} → ${mapping.matrixRoomId}")
+                        return mapping.matrixRoomId
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error searching for existing service room", e)
+        }
+
+        return null
     }
 
     override suspend fun getContactForRoom(roomId: String): String? {
