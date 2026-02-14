@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Junction" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Dark mode specific colors -->
+        <!-- Ensure text is visible in dark mode input fields -->
+        <item name="colorOnSurface">@android:color/white</item>
+        <item name="colorOnSurfaceVariant">#B3FFFFFF</item>
+
+        <!-- Edit text colors - white text on dark background -->
+        <item name="editTextColor">@android:color/white</item>
+        <item name="android:editTextColor">@android:color/white</item>
+
+        <!-- Text appearance -->
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textColorSecondary">#B3FFFFFF</item>
+        <item name="android:textColorHint">#80FFFFFF</item>
+
+        <!-- Material 3 text input style -->
+        <item name="textInputStyle">@style/Widget.Material3.TextInputLayout.OutlinedBox</item>
+    </style>
+</resources>

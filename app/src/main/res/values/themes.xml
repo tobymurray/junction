@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Junction" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize theme here -->
+        <!-- Fix text visibility in input fields for dark mode -->
+        <!-- Text Input Field colors -->
+        <item name="colorOnSurface">@android:color/black</item>
+        <item name="colorOnSurfaceVariant">@android:color/darker_gray</item>
+
+        <!-- Edit text colors -->
+        <item name="editTextColor">?android:attr/textColorPrimary</item>
+        <item name="android:editTextColor">?android:attr/textColorPrimary</item>
+
+        <!-- Material 3 text input style -->
+        <item name="textInputStyle">@style/Widget.Material3.TextInputLayout.OutlinedBox</item>
     </style>
 </resources>
