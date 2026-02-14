@@ -28,6 +28,7 @@ object MatrixBridgeInitializer {
      * @param deviceId Device ID
      * @param accessToken Access token
      * @param homeserverDomain Domain for room alias creation (e.g., "matrix.org")
+     * @param enableServiceGrouping Whether to group short codes by service (default: true)
      * @return true if initialization succeeded
      */
     suspend fun initialize(
@@ -36,7 +37,8 @@ object MatrixBridgeInitializer {
         userId: String,
         deviceId: String,
         accessToken: String,
-        homeserverDomain: String
+        homeserverDomain: String,
+        enableServiceGrouping: Boolean = true
     ): Boolean {
         // Create client manager
         val manager = TrixnityClientManager(context)
@@ -55,7 +57,8 @@ object MatrixBridgeInitializer {
         val mapper = SimpleRoomMapper(
             context = context,
             clientManager = manager,
-            homeserverDomain = homeserverDomain
+            homeserverDomain = homeserverDomain,
+            enableServiceGrouping = enableServiceGrouping
         )
 
         // Create bridge
@@ -87,6 +90,7 @@ object MatrixBridgeInitializer {
     /**
      * Login with username and password.
      *
+     * @param enableServiceGrouping Whether to group short codes by service (default: true)
      * @return LoginResult with credentials or error
      */
     suspend fun login(
@@ -94,7 +98,8 @@ object MatrixBridgeInitializer {
         serverUrl: String,
         username: String,
         password: String,
-        homeserverDomain: String
+        homeserverDomain: String,
+        enableServiceGrouping: Boolean = true
     ): TrixnityClientManager.LoginResult {
         val manager = TrixnityClientManager(context)
         val result = manager.login(serverUrl, username, password)
@@ -104,7 +109,8 @@ object MatrixBridgeInitializer {
             val mapper = SimpleRoomMapper(
                 context = context,
                 clientManager = manager,
-                homeserverDomain = homeserverDomain
+                homeserverDomain = homeserverDomain,
+                enableServiceGrouping = enableServiceGrouping
             )
 
             val matrixBridge = TrixnityMatrixBridge(

@@ -46,7 +46,20 @@ data class MatrixConfig(
      * Timestamp of last successful connection (milliseconds since epoch).
      * 0 means never connected.
      */
-    val lastConnectedTimestamp: Long = 0L
+    val lastConnectedTimestamp: Long = 0L,
+
+    /**
+     * Whether to group short code messages by service.
+     *
+     * When enabled, messages from different short codes belonging to the same service
+     * (e.g., Google verification from 83687 and 22000) are grouped into a single
+     * Matrix room based on message content classification.
+     *
+     * When disabled, each short code gets its own room (original behavior).
+     *
+     * Default: true (grouping enabled)
+     */
+    val groupShortCodesByService: Boolean = true
 ) : Parcelable {
 
     /**
@@ -75,7 +88,8 @@ data class MatrixConfig(
         accessToken = parcel.readString() ?: "",
         deviceId = parcel.readString() ?: "",
         enabled = parcel.readByte() != 0.toByte(),
-        lastConnectedTimestamp = parcel.readLong()
+        lastConnectedTimestamp = parcel.readLong(),
+        groupShortCodesByService = parcel.readByte() != 0.toByte()
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -86,6 +100,7 @@ data class MatrixConfig(
         parcel.writeString(deviceId)
         parcel.writeByte(if (enabled) 1 else 0)
         parcel.writeLong(lastConnectedTimestamp)
+        parcel.writeByte(if (groupShortCodesByService) 1 else 0)
     }
 
     override fun describeContents(): Int = 0

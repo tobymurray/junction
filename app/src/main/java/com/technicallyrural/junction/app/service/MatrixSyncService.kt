@@ -174,7 +174,8 @@ class MatrixSyncService : Service() {
                 val roomMapper = SimpleRoomMapper(
                     context = applicationContext,
                     clientManager = clientManager,
-                    homeserverDomain = serverDomain
+                    homeserverDomain = serverDomain,
+                    enableServiceGrouping = config.groupShortCodesByService
                 )
 
                 val matrixBridge = TrixnityMatrixBridge(

@@ -87,8 +87,12 @@ class TrixnityMatrixBridge(
 
         android.util.Log.e("TrixnityMatrixBridge", "Client exists, calling getRoomForContact...")
 
-        // Get or create room for this contact
-        val roomIdStr = roomMapper.getRoomForContact(phoneNumber)
+        // Get or create room for this contact (pass message body for service classification)
+        val roomIdStr = roomMapper.getRoomForContact(
+            phoneNumber = phoneNumber,
+            messageBody = messageBody,
+            timestamp = timestamp
+        )
         if (roomIdStr == null) {
             android.util.Log.e("TrixnityMatrixBridge", "getRoomForContact returned NULL!")
             return MatrixSendResult.Failure(MatrixSendError.ROOM_CREATION_FAILED)
@@ -122,7 +126,12 @@ class TrixnityMatrixBridge(
         val client = clientManager.client
             ?: return MatrixSendResult.Failure(MatrixSendError.NOT_CONNECTED)
 
-        val roomIdStr = roomMapper.getRoomForContact(phoneNumber)
+        // Get or create room for this contact (pass message body for service classification)
+        val roomIdStr = roomMapper.getRoomForContact(
+            phoneNumber = phoneNumber,
+            messageBody = messageBody,
+            timestamp = timestamp
+        )
             ?: return MatrixSendResult.Failure(MatrixSendError.ROOM_CREATION_FAILED)
 
         return try {

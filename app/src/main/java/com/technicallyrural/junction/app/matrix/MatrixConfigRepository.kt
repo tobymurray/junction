@@ -41,7 +41,8 @@ class MatrixConfigRepository(context: Context) {
             accessToken = sharedPreferences.getString(KEY_ACCESS_TOKEN, "") ?: "",
             deviceId = sharedPreferences.getString(KEY_DEVICE_ID, "") ?: "",
             enabled = sharedPreferences.getBoolean(KEY_ENABLED, false),
-            lastConnectedTimestamp = sharedPreferences.getLong(KEY_LAST_CONNECTED, 0L)
+            lastConnectedTimestamp = sharedPreferences.getLong(KEY_LAST_CONNECTED, 0L),
+            groupShortCodesByService = sharedPreferences.getBoolean(KEY_GROUP_SHORT_CODES, true)
         )
     }
 
@@ -57,6 +58,7 @@ class MatrixConfigRepository(context: Context) {
             putString(KEY_DEVICE_ID, config.deviceId)
             putBoolean(KEY_ENABLED, config.enabled)
             putLong(KEY_LAST_CONNECTED, config.lastConnectedTimestamp)
+            putBoolean(KEY_GROUP_SHORT_CODES, config.groupShortCodesByService)
             apply()
         }
     }
@@ -88,6 +90,7 @@ class MatrixConfigRepository(context: Context) {
         private const val KEY_DEVICE_ID = "device_id"
         private const val KEY_ENABLED = "enabled"
         private const val KEY_LAST_CONNECTED = "last_connected"
+        private const val KEY_GROUP_SHORT_CODES = "group_short_codes_by_service"
 
         @Volatile
         private var instance: MatrixConfigRepository? = null

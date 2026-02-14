@@ -112,6 +112,7 @@ class MatrixConfigActivity : AppCompatActivity() {
         binding.usernameInput.setText(config.username)
         binding.userIdInput.setText(config.userId)
         binding.enabledSwitch.isChecked = config.enabled
+        binding.groupShortCodesSwitch.isChecked = config.groupShortCodesByService
 
         // Don't populate password field for security
         // Clear it so user knows they need to re-enter if changing
@@ -228,6 +229,7 @@ class MatrixConfigActivity : AppCompatActivity() {
         val username = binding.usernameInput.text?.toString()?.trim() ?: ""
         val password = binding.passwordInput.text?.toString()?.trim() ?: ""
         val enabled = binding.enabledSwitch.isChecked
+        val groupShortCodesByService = binding.groupShortCodesSwitch.isChecked
 
         // Validate inputs
         if (enabled) {
@@ -252,6 +254,7 @@ class MatrixConfigActivity : AppCompatActivity() {
             serverUrl = serverUrl,
             username = username,
             enabled = enabled,
+            groupShortCodesByService = groupShortCodesByService,
             // Keep existing auth credentials unless changed
             // Note: Password is only used for initial login, not stored
         )
@@ -485,7 +488,8 @@ class MatrixConfigActivity : AppCompatActivity() {
                 val roomMapper = SimpleRoomMapper(
                     context = applicationContext,
                     clientManager = clientManager,
-                    homeserverDomain = serverDomain
+                    homeserverDomain = serverDomain,
+                    enableServiceGrouping = currentConfig.groupShortCodesByService
                 )
 
                 val bridge = TrixnityMatrixBridge(

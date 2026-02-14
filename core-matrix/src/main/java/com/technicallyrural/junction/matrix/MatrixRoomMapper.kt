@@ -18,15 +18,22 @@ interface MatrixRoomMapper {
      *
      * This method:
      * 1. Normalizes the phone number to E.164 format
-     * 2. Checks the local database cache
-     * 3. Tries to resolve the canonical room alias
-     * 4. Creates a new DM room if no mapping exists
-     * 5. Stores the mapping in the local database
+     * 2. For short codes with service grouping enabled, classifies by message content
+     * 3. Checks the local database cache (per-number or service-based)
+     * 4. Tries to resolve the canonical room alias
+     * 5. Creates a new DM room if no mapping exists
+     * 6. Stores the mapping in the local database
      *
      * @param phoneNumber Phone number (will be normalized to E.164)
+     * @param messageBody Message content for service classification (optional for regular numbers, required for short code grouping)
+     * @param timestamp Message timestamp for time-based classification patterns
      * @return Room ID for the contact, or null if creation failed
      */
-    suspend fun getRoomForContact(phoneNumber: String): String?
+    suspend fun getRoomForContact(
+        phoneNumber: String,
+        messageBody: String? = null,
+        timestamp: Long = System.currentTimeMillis()
+    ): String?
 
     /**
      * Get the phone number associated with a Matrix room.

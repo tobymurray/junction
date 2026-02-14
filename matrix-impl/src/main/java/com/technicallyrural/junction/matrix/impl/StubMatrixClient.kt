@@ -153,8 +153,12 @@ class StubMatrixBridge(
         timestamp: Long,
         isGroup: Boolean
     ): MatrixSendResult {
-        // TODO: Get room ID from mapper
-        val roomId = roomMapper.getRoomForContact(phoneNumber)
+        // Get room ID from mapper (pass message body for service classification)
+        val roomId = roomMapper.getRoomForContact(
+            phoneNumber = phoneNumber,
+            messageBody = messageBody,
+            timestamp = timestamp
+        )
             ?: return MatrixSendResult.Failure(MatrixSendError.ROOM_CREATION_FAILED)
 
         // TODO: Send message via Trixnity

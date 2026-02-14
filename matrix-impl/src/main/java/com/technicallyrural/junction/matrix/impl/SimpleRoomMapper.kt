@@ -4,6 +4,8 @@ import android.content.Context
 import android.telephony.PhoneNumberUtils
 import android.util.Log
 import com.technicallyrural.junction.matrix.*
+import com.technicallyrural.junction.matrix.impl.shortcode.ServiceClassifier
+import com.technicallyrural.junction.matrix.impl.shortcode.ServiceRoomMapper
 import com.technicallyrural.junction.persistence.repository.RoomMappingRepository
 import com.technicallyrural.junction.persistence.util.AospThreadIdExtractor
 import kotlinx.coroutines.sync.Mutex
@@ -18,26 +20,39 @@ import java.util.Locale
  * Uses conversation-based mapping (not phone-based) to support:
  * - Same contact in multiple conversations (1:1 + different groups)
  * - Persistent storage across app restarts
+ * - Service-based grouping for short codes (when enabled)
  *
  * Mappings:
- * - Conversation ID (AOSP thread_id) → Matrix room ID
+ * - Conversation ID (AOSP thread_id) → Matrix room ID (regular numbers)
+ * - Service ID (service:$key) → Matrix room ID (grouped short codes)
  * - Bidirectional lookup for bridging in both directions
+ *
+ * @param enableServiceGrouping Whether to group short codes by service (default: true)
  */
 class SimpleRoomMapper(
     private val context: Context,
     private val clientManager: TrixnityClientManager,
-    private val homeserverDomain: String
+    private val homeserverDomain: String,
+    private val enableServiceGrouping: Boolean = true
 ) : MatrixRoomMapper {
 
     private val roomRepo = RoomMappingRepository.getInstance(context)
     private val mutex = Mutex()
 
+    // Service classification components (lazy initialization)
+    private val serviceClassifier by lazy { ServiceClassifier(context) }
+    private val serviceRoomMapper by lazy { ServiceRoomMapper(context, clientManager, homeserverDomain) }
+
     companion object {
         private const val TAG = "SimpleRoomMapper"
     }
 
-    override suspend fun getRoomForContact(phoneNumber: String): String? = mutex.withLock {
-        Log.e(TAG, "getRoomForContact called for: $phoneNumber")
+    override suspend fun getRoomForContact(
+        phoneNumber: String,
+        messageBody: String?,
+        timestamp: Long
+    ): String? = mutex.withLock {
+        Log.d(TAG, "getRoomForContact called for: $phoneNumber (hasBody=${messageBody != null})")
 
         val client = clientManager.client
         if (client == null) {
@@ -45,27 +60,33 @@ class SimpleRoomMapper(
             return@withLock null
         }
 
-        Log.e(TAG, "Matrix client is available, proceeding...")
-
         // 1. Normalize phone number to E.164 or detect short code
         val normalized = normalizeToE164(phoneNumber)
         if (normalized == null) {
-            Log.e(TAG, "Phone number normalization returned null for: $phoneNumber (should not happen)")
+            Log.e(TAG, "Phone number normalization returned null for: $phoneNumber")
             return@withLock null
         }
-        Log.e(TAG, "Phone normalized to: $normalized")
+        Log.d(TAG, "Phone normalized to: $normalized")
 
-        // 2. Get conversation ID from AOSP thread system
+        // 2. Check if this is a short code with service grouping enabled
+        if (normalized.startsWith("short:") && messageBody != null && enableServiceGrouping) {
+            Log.d(TAG, "Service grouping enabled, classifying short code")
+            return getGroupedShortCodeRoom(normalized, messageBody, timestamp)
+        } else if (normalized.startsWith("short:")) {
+            Log.d(TAG, "Service grouping disabled or no message body, using per-number mapping")
+        }
+
+        // 3. Standard per-number mapping path (regular numbers or grouping disabled)
         val conversationId = AospThreadIdExtractor.getThreadIdForAddress(context, normalized)
 
-        // 3. Check database for existing mapping
+        // 4. Check database for existing mapping
         val cached = roomRepo.getRoomForConversation(conversationId)
         if (cached != null) {
             Log.d(TAG, "Room found in database for conversation $conversationId: $cached")
             return cached
         }
 
-        // 4. Try canonical room alias resolution
+        // 5. Try canonical room alias resolution
         val alias = buildRoomAlias(normalized)
         val roomByAlias = tryResolveAlias(alias)
         if (roomByAlias != null) {
@@ -80,8 +101,55 @@ class SimpleRoomMapper(
             return roomByAlias
         }
 
-        // 5. Create new DM room with alias
+        // 6. Create new DM room with alias
         return createRoomForContact(conversationId, normalized, alias)
+    }
+
+    /**
+     * Get or create service-grouped room for short code.
+     */
+    private suspend fun getGroupedShortCodeRoom(
+        normalizedNumber: String,
+        messageBody: String,
+        timestamp: Long
+    ): String? {
+        val shortCode = normalizedNumber.removePrefix("short:")
+
+        // Classify message by service
+        val classification = serviceClassifier.classifyMessage(shortCode, messageBody, timestamp)
+
+        Log.d(TAG, "Classification result: ${classification.serviceKey} " +
+                "(confidence=${classification.confidence}, reason=${classification.reason})")
+
+        // If classification failed or returned per-number fallback, use standard mapping
+        if (classification.serviceKey.startsWith("unknown_")) {
+            Log.d(TAG, "Using per-number mapping for unknown short code $shortCode")
+            val conversationId = AospThreadIdExtractor.getThreadIdForAddress(context, normalizedNumber)
+            val cached = roomRepo.getRoomForConversation(conversationId)
+            if (cached != null) return cached
+
+            val alias = buildRoomAlias(normalizedNumber)
+            val roomByAlias = tryResolveAlias(alias)
+            if (roomByAlias != null) {
+                roomRepo.setMapping(
+                    conversationId = conversationId,
+                    participants = listOf(normalizedNumber),
+                    roomId = roomByAlias,
+                    alias = alias,
+                    isGroup = false
+                )
+                return roomByAlias
+            }
+
+            return createRoomForContact(conversationId, normalizedNumber, alias)
+        }
+
+        // Get or create service room
+        return serviceRoomMapper.getServiceRoom(
+            serviceKey = classification.serviceKey,
+            serviceName = classification.serviceName,
+            shortCode = shortCode
+        )
     }
 
     override suspend fun getContactForRoom(roomId: String): String? {

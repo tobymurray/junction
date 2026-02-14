@@ -1,0 +1,283 @@
+{
+  "version": 1,
+  "description": "Service classification rules for SMS short code grouping",
+  "rules": [
+    {
+      "serviceKey": "google_verify",
+      "serviceName": "Google Verification",
+      "description": "Google 2FA and verification codes",
+      "shortCodes": ["83687", "22000", "93753"],
+      "patterns": [
+        {
+          "regex": "(?i)google\\s+verification",
+          "confidence": 0.95,
+          "description": "Direct mention of 'Google verification'"
+        },
+        {
+          "regex": "(?i)G-\\d{6}",
+          "confidence": 0.9,
+          "description": "Google code format G-123456"
+        },
+        {
+          "regex": "(?i)your\\s+google\\s+(code|account)",
+          "confidence": 0.85,
+          "description": "Google account or code reference"
+        },
+        {
+          "regex": "(?i)verify.*google|google.*verify",
+          "confidence": 0.8,
+          "description": "Verification + Google in any order"
+        }
+      ]
+    },
+    {
+      "serviceKey": "tangerine_bank",
+      "serviceName": "Tangerine Banking",
+      "description": "Tangerine Bank account notifications",
+      "shortCodes": ["38698", "46645"],
+      "patterns": [
+        {
+          "regex": "(?i)tangerine",
+          "confidence": 1.0,
+          "description": "Brand name Tangerine"
+        },
+        {
+          "regex": "(?i)account\\s+balance.*\\$\\d+",
+          "confidence": 0.8,
+          "description": "Account balance notification"
+        },
+        {
+          "regex": "(?i)transaction\\s+alert",
+          "confidence": 0.75,
+          "description": "Transaction alert from bank"
+        }
+      ]
+    },
+    {
+      "serviceKey": "td_bank",
+      "serviceName": "TD Bank",
+      "description": "TD Canada Trust banking alerts",
+      "shortCodes": ["22884", "36637"],
+      "patterns": [
+        {
+          "regex": "(?i)TD\\s+Bank",
+          "confidence": 1.0,
+          "description": "Brand name TD Bank"
+        },
+        {
+          "regex": "(?i)TD\\s+(Alert|Canada|Trust)",
+          "confidence": 0.9,
+          "description": "TD brand variants"
+        },
+        {
+          "regex": "(?i)TD.*account",
+          "confidence": 0.85,
+          "description": "TD account reference"
+        }
+      ]
+    },
+    {
+      "serviceKey": "rbc_bank",
+      "serviceName": "RBC Banking",
+      "description": "Royal Bank of Canada notifications",
+      "shortCodes": ["72613", "47722"],
+      "patterns": [
+        {
+          "regex": "(?i)RBC|Royal\\s+Bank",
+          "confidence": 1.0,
+          "description": "RBC or Royal Bank brand"
+        },
+        {
+          "regex": "(?i)RBC.*alert",
+          "confidence": 0.9,
+          "description": "RBC alert notification"
+        }
+      ]
+    },
+    {
+      "serviceKey": "scotiabank",
+      "serviceName": "Scotiabank",
+      "description": "Scotiabank account alerts",
+      "shortCodes": ["62255"],
+      "patterns": [
+        {
+          "regex": "(?i)scotiabank|scotia",
+          "confidence": 1.0,
+          "description": "Scotiabank brand name"
+        },
+        {
+          "regex": "(?i)scotia.*alert",
+          "confidence": 0.9,
+          "description": "Scotia alert notification"
+        }
+      ]
+    },
+    {
+      "serviceKey": "bmo_bank",
+      "serviceName": "BMO Banking",
+      "description": "Bank of Montreal notifications",
+      "shortCodes": ["26665"],
+      "patterns": [
+        {
+          "regex": "(?i)BMO|Bank\\s+of\\s+Montreal",
+          "confidence": 1.0,
+          "description": "BMO brand name"
+        },
+        {
+          "regex": "(?i)BMO.*alert",
+          "confidence": 0.9,
+          "description": "BMO alert notification"
+        }
+      ]
+    },
+    {
+      "serviceKey": "amazon_verify",
+      "serviceName": "Amazon Verification",
+      "description": "Amazon 2FA and order notifications",
+      "shortCodes": ["86975", "262966"],
+      "patterns": [
+        {
+          "regex": "(?i)amazon",
+          "confidence": 0.95,
+          "description": "Amazon brand mention"
+        },
+        {
+          "regex": "(?i)your\\s+amazon\\s+(order|account|code)",
+          "confidence": 0.9,
+          "description": "Amazon order or account reference"
+        },
+        {
+          "regex": "(?i)\\d{6}.*amazon|amazon.*\\d{6}",
+          "confidence": 0.85,
+          "description": "6-digit code with Amazon"
+        }
+      ]
+    },
+    {
+      "serviceKey": "microsoft_verify",
+      "serviceName": "Microsoft Verification",
+      "description": "Microsoft account verification",
+      "shortCodes": ["96387"],
+      "patterns": [
+        {
+          "regex": "(?i)microsoft",
+          "confidence": 0.95,
+          "description": "Microsoft brand mention"
+        },
+        {
+          "regex": "(?i)microsoft\\s+account",
+          "confidence": 0.9,
+          "description": "Microsoft account reference"
+        }
+      ]
+    },
+    {
+      "serviceKey": "carrier_rogers",
+      "serviceName": "Rogers Communications",
+      "description": "Rogers wireless carrier alerts",
+      "shortCodes": ["611", "7747"],
+      "patterns": [
+        {
+          "regex": "(?i)rogers",
+          "confidence": 1.0,
+          "description": "Rogers brand"
+        },
+        {
+          "regex": "(?i)data\\s+usage|bill\\s+ready",
+          "confidence": 0.7,
+          "description": "Carrier data/billing notification"
+        }
+      ]
+    },
+    {
+      "serviceKey": "carrier_bell",
+      "serviceName": "Bell Mobility",
+      "description": "Bell wireless carrier alerts",
+      "shortCodes": ["611", "40404"],
+      "patterns": [
+        {
+          "regex": "(?i)bell\\s+(mobility|canada|wireless)",
+          "confidence": 1.0,
+          "description": "Bell brand variants"
+        },
+        {
+          "regex": "(?i)data\\s+usage|bill\\s+ready",
+          "confidence": 0.7,
+          "description": "Carrier data/billing notification"
+        }
+      ]
+    },
+    {
+      "serviceKey": "carrier_telus",
+      "serviceName": "TELUS Mobility",
+      "description": "TELUS wireless carrier alerts",
+      "shortCodes": ["611", "7626"],
+      "patterns": [
+        {
+          "regex": "(?i)telus",
+          "confidence": 1.0,
+          "description": "TELUS brand"
+        },
+        {
+          "regex": "(?i)data\\s+usage|bill\\s+ready",
+          "confidence": 0.7,
+          "description": "Carrier data/billing notification"
+        }
+      ]
+    },
+    {
+      "serviceKey": "uber",
+      "serviceName": "Uber",
+      "description": "Uber ride and delivery notifications",
+      "shortCodes": ["82506", "89203"],
+      "patterns": [
+        {
+          "regex": "(?i)uber",
+          "confidence": 0.95,
+          "description": "Uber brand"
+        },
+        {
+          "regex": "(?i)(driver|trip|delivery).*arriving|arriving.*(driver|trip)",
+          "confidence": 0.8,
+          "description": "Uber ride/delivery status"
+        }
+      ]
+    },
+    {
+      "serviceKey": "doordash",
+      "serviceName": "DoorDash",
+      "description": "DoorDash delivery notifications",
+      "shortCodes": ["73009"],
+      "patterns": [
+        {
+          "regex": "(?i)doordash",
+          "confidence": 1.0,
+          "description": "DoorDash brand"
+        },
+        {
+          "regex": "(?i)dasher|delivery.*on.*way",
+          "confidence": 0.85,
+          "description": "DoorDash delivery status"
+        }
+      ]
+    },
+    {
+      "serviceKey": "canada_post",
+      "serviceName": "Canada Post",
+      "description": "Package delivery notifications",
+      "shortCodes": ["70888"],
+      "patterns": [
+        {
+          "regex": "(?i)canada\\s+post|postes\\s+canada",
+          "confidence": 1.0,
+          "description": "Canada Post brand (English/French)"
+        },
+        {
+          "regex": "(?i)(package|parcel|colis).*delivered|delivered.*(package|parcel)",
+          "confidence": 0.85,
+          "description": "Package delivery status"
+        }
+      ]
+    }
+  ]
+}
