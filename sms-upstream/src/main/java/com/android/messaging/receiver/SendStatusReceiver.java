@@ -30,6 +30,7 @@ import com.android.messaging.datamodel.data.ParticipantData;
 import com.android.messaging.sms.MmsUtils;
 import com.android.messaging.sms.SmsSender;
 import com.android.messaging.util.LogUtil;
+import com.technicallyrural.junction.core.CoreSmsRegistry;
 
 /**
  * The SMS sent and delivery intent receiver.
@@ -68,10 +69,22 @@ public class SendStatusReceiver extends BroadcastReceiver {
                     intent.getIntExtra(EXTRA_ERROR_CODE, NO_ERROR_CODE),
                     intent.getIntExtra(EXTRA_PART_ID, NO_PART_ID),
                     intent.getIntExtra(EXTRA_SUB_ID, ParticipantData.DEFAULT_SELF_SUB_ID));
+
+            // PATCH: Notify outbound message observer (for Matrix bridging)
+            if (CoreSmsRegistry.INSTANCE.getOutboundMessageObserver() != null) {
+                CoreSmsRegistry.INSTANCE.getOutboundMessageObserver().onMessageSent(
+                        requestId, resultCode, true /* isSms */);
+            }
         } else if (MMS_SENT_ACTION.equals(action)) {
             final Uri messageUri = intent.getData();
             ProcessSentMessageAction.processMmsSent(resultCode, messageUri,
                     intent.getExtras());
+
+            // PATCH: Notify outbound message observer (for Matrix bridging)
+            if (CoreSmsRegistry.INSTANCE.getOutboundMessageObserver() != null) {
+                CoreSmsRegistry.INSTANCE.getOutboundMessageObserver().onMessageSent(
+                        messageUri, resultCode, false /* isSms */);
+            }
         } else if (MMS_DOWNLOADED_ACTION.equals(action)) {
             ProcessDownloadedMmsAction.processMessageDownloaded(resultCode,
                     intent.getExtras());
@@ -115,6 +128,12 @@ public class SendStatusReceiver extends BroadcastReceiver {
                 return;
             }
             ProcessDeliveryReportAction.deliveryReportReceived(smsMessageUri, status);
+
+            // PATCH: Notify outbound message observer (for Matrix bridging)
+            if (CoreSmsRegistry.INSTANCE.getOutboundMessageObserver() != null) {
+                CoreSmsRegistry.INSTANCE.getOutboundMessageObserver().onDeliveryReportReceived(
+                        smsMessageUri, status);
+            }
         }
     }
 }

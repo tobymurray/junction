@@ -32,6 +32,9 @@ interface BridgedMessageDao {
     @Query("SELECT EXISTS(SELECT 1 FROM bridged_messages WHERE matrix_event_id = :eventId)")
     suspend fun existsByMatrixEventId(eventId: String): Boolean
 
+    @Query("SELECT EXISTS(SELECT 1 FROM bridged_messages WHERE sms_message_id = :smsMessageId)")
+    suspend fun existsBySmsMessageId(smsMessageId: Long): Boolean
+
     @Query("""
         SELECT * FROM bridged_messages
         WHERE status = :status

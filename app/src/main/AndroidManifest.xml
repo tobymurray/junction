@@ -167,7 +167,7 @@
              SMS/MMS RECEIVERS (app module)
              ================================================================ -->
 
-        <!-- Primary SMS receiver for Matrix bridging
+        <!-- Primary SMS receiver for Matrix bridging (INBOUND)
              This receiver intercepts SMS_DELIVER before AOSP processing,
              enabling SMS → Matrix forwarding while maintaining normal
              SMS storage and UI functionality via CoreSmsRegistry listener. -->
@@ -177,6 +177,25 @@
             android:permission="android.permission.BROADCAST_SMS">
             <intent-filter>
                 <action android:name="android.provider.Telephony.SMS_DELIVER" />
+            </intent-filter>
+        </receiver>
+
+        <!-- SMS/MMS send status receiver for Matrix bridging (OUTBOUND)
+             This receiver intercepts MESSAGE_SENT_ACTION callbacks after
+             successful carrier transmission, enabling outbound SMS → Matrix
+             bridging. Runs in parallel with AOSP's SendStatusReceiver. -->
+        <receiver
+            android:name=".receiver.SmsSentStatusReceiver"
+            android:exported="false" />
+
+        <!-- Boot receiver for unbridged message recovery
+             Scans AOSP database on boot for sent messages that weren't
+             bridged due to crashes, ensuring eventual consistency. -->
+        <receiver
+            android:name=".receiver.MatrixBridgeBootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 

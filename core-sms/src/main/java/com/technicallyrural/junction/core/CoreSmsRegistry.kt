@@ -3,6 +3,7 @@ package com.technicallyrural.junction.core
 import com.technicallyrural.junction.core.contacts.ContactResolver
 import com.technicallyrural.junction.core.notification.NotificationFacade
 import com.technicallyrural.junction.core.store.MessageStore
+import com.technicallyrural.junction.core.transport.OutboundMessageObserver
 import com.technicallyrural.junction.core.transport.SmsReceiveListener
 import com.technicallyrural.junction.core.transport.SmsTransport
 
@@ -13,8 +14,8 @@ import com.technicallyrural.junction.core.transport.SmsTransport
  * (in BugleApplication.initializeSync). The app module can then access them
  * via property accessors without importing any AOSP classes.
  *
- * SmsReceiveListener is registered separately by the app module since
- * the app owns the BroadcastReceivers.
+ * SmsReceiveListener and OutboundMessageObserver are registered separately
+ * by the app module since the app owns the BroadcastReceivers and Matrix bridging.
  */
 object CoreSmsRegistry {
 
@@ -23,6 +24,7 @@ object CoreSmsRegistry {
     private var _notificationFacade: NotificationFacade? = null
     private var _contactResolver: ContactResolver? = null
     private var _smsReceiveListener: SmsReceiveListener? = null
+    private var _outboundMessageObserver: OutboundMessageObserver? = null
 
     val isInitialized: Boolean
         get() = _smsTransport != null
@@ -45,6 +47,9 @@ object CoreSmsRegistry {
 
     val smsReceiveListener: SmsReceiveListener?
         get() = _smsReceiveListener
+
+    val outboundMessageObserver: OutboundMessageObserver?
+        get() = _outboundMessageObserver
 
     /**
      * Initialize the registry with adapter implementations.
@@ -77,5 +82,20 @@ object CoreSmsRegistry {
      */
     fun unregisterSmsReceiveListener() {
         _smsReceiveListener = null
+    }
+
+    /**
+     * Register an outbound message observer.
+     * Called by the app module to receive outbound message send notifications.
+     */
+    fun registerOutboundMessageObserver(observer: OutboundMessageObserver) {
+        _outboundMessageObserver = observer
+    }
+
+    /**
+     * Unregister the outbound message observer.
+     */
+    fun unregisterOutboundMessageObserver() {
+        _outboundMessageObserver = null
     }
 }

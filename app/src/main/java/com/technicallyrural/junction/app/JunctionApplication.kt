@@ -3,7 +3,9 @@ package com.technicallyrural.junction.app
 import android.util.Log
 import com.android.messaging.BugleApplication
 import com.technicallyrural.junction.app.matrix.MatrixConfigRepository
+import com.technicallyrural.junction.app.observer.OutboundMessageObserverImpl
 import com.technicallyrural.junction.app.service.MatrixSyncService
+import com.technicallyrural.junction.core.CoreSmsRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,6 +35,13 @@ class JunctionApplication : BugleApplication() {
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Junction application starting")
+
+        // Register outbound message observer for Matrix bridging
+        // (called by AOSP SendStatusReceiver via CoreSmsRegistry)
+        CoreSmsRegistry.registerOutboundMessageObserver(
+            OutboundMessageObserverImpl(this)
+        )
+        Log.d(TAG, "Registered outbound message observer for Matrix bridging")
 
         // Register Matrix status indicator injector
         registerActivityLifecycleCallbacks(com.technicallyrural.junction.app.ui.MatrixStatusInjector())

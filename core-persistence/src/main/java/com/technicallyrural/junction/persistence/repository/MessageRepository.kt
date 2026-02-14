@@ -283,4 +283,94 @@ class MessageRepository(context: Context) {
             Status.FAILED to messageDao.countByStatus(Status.FAILED)
         )
     }
+
+    /**
+     * Record outbound Phone → Matrix send (user-sent messages).
+     *
+     * This is for messages sent BY the user (from this phone) that need to be
+     * bridged to Matrix. Different from recordSmsToMatrixSend() which handles
+     * inbound SMS from external senders.
+     *
+     * @param smsMessageId The AOSP telephony database message ID (primary dedup key)
+     * @param conversationId The AOSP thread ID
+     * @param senderAddress Our phone number (self)
+     * @param recipientAddresses Destination phone numbers
+     * @param body Message text
+     * @param timestamp Send timestamp
+     * @return Entity if created, null if duplicate
+     */
+    suspend fun recordPhoneToMatrixSend(
+        smsMessageId: Long,
+        conversationId: String,
+        senderAddress: String,
+        recipientAddresses: List<String>,
+        body: String,
+        timestamp: Long,
+        isGroup: Boolean = recipientAddresses.size > 1
+    ): BridgedMessageEntity? {
+        // Primary deduplication: SMS message ID from AOSP database
+        if (messageDao.existsBySmsMessageId(smsMessageId)) {
+            android.util.Log.w(TAG, "Duplicate Phone → Matrix send detected: smsMessageId=$smsMessageId")
+            return null
+        }
+
+        // Secondary deduplication: conversation + timestamp + body hash
+        val dedupKey = DedupKeyGenerator.generate(conversationId, timestamp, body)
+        if (messageDao.existsByDedupKey(dedupKey)) {
+            android.util.Log.w(TAG, "Duplicate Phone → Matrix send detected: dedupKey=$dedupKey")
+            return null
+        }
+
+        // Insert message record
+        val entity = BridgedMessageEntity(
+            dedupKey = dedupKey,
+            conversationId = conversationId,
+            timestamp = timestamp,
+            bodyHash = DedupKeyGenerator.getBodyHash(body),
+            direction = Direction.SMS_TO_MATRIX,
+            isGroup = isGroup,
+            smsMessageId = smsMessageId,
+            status = Status.PENDING,
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis()
+        )
+
+        val messageId = messageDao.insertOrIgnore(entity)
+        if (messageId == -1L) return null
+
+        // Insert participants
+        val participants = mutableListOf<MessageParticipantEntity>()
+
+        participants.add(MessageParticipantEntity(
+            messageId = messageId,
+            phoneNumber = senderAddress,
+            participantType = ParticipantType.SENDER
+        ))
+
+        recipientAddresses.forEach { recipient ->
+            participants.add(MessageParticipantEntity(
+                messageId = messageId,
+                phoneNumber = recipient,
+                participantType = ParticipantType.RECIPIENT
+            ))
+        }
+
+        participantDao.insertAll(participants)
+
+        return entity.copy(id = messageId)
+    }
+
+    /**
+     * Check if a message has been bridged (by AOSP SMS message ID).
+     */
+    suspend fun existsBySmsMessageId(smsMessageId: Long): Boolean {
+        return messageDao.existsBySmsMessageId(smsMessageId)
+    }
+
+    /**
+     * Get bridge status for a message (by AOSP SMS message ID).
+     */
+    suspend fun getBridgeStatus(smsMessageId: Long): Status? {
+        return messageDao.findBySmsMessageId(smsMessageId)?.status
+    }
 }
